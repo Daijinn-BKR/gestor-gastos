@@ -43,7 +43,7 @@ Además, una página de **Resumen** junta lo más importante del mes y permite *
 Requiere Python 3.10 o superior. En Windows 10/11 no necesitas nada más (usa Microsoft Edge WebView2, que viene incluido).
 
 ```bash
-git clone https://github.com/TU-USUARIO/gestor-gastos.git
+git clone https://github.com/Daijinn-BKR/gestor-gastos.git
 cd gestor-gastos
 
 python -m venv venv
