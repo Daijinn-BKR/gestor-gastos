@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tarjeta, barra %}
+{% block titulo %}Resumen{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <h1>Resumen de {{ mes | nombre_mes }}</h1>
+  <a class="boton" id="exportar" href="{{ url_for('resumen.exportar') }}">⬇ Exportar a Excel</a>
+</div>
+<div id="avisos"></div>
+
+<section class="grilla-tarjetas">
+  {{ tarjeta('Saldo en cuenta', saldo | clp, 'negativo' if saldo < 0 else '') }}
+  {{ tarjeta('Balance del mes', totales.balance | clp,
+             'positivo' if totales.balance >= 0 else 'negativo',
+             'Ingresos ' ~ (totales.ingresos | clp) ~ ' · Egresos ' ~ (totales.egresos | clp)) }}
+  {{ tarjeta('Deuda en créditos', credito.deuda | clp, '',
+             (('+ ' ~ (credito.deuda_usd | usd) ~ ' · ') if credito.deuda_usd else '')
+             ~ (('Disponible ' ~ (credito.disponible | clp)) if credito.cuentas else 'Sin créditos registrados')) }}
+  {{ tarjeta('Ahorro', ahorro.saldo | clp, 'positivo',
+             ('Meta ' ~ (ahorro.meta | clp) ~ ' · ' ~ ahorro.progreso ~ '%') if ahorro.meta else 'Sin meta definida') }}
+</section>
+
+<div class="dos-columnas">
+  <section class="panel">
+    <h2>Egresos por categoría</h2>
+    {% if por_categoria %}
+      <ul class="categorias">
+        {% for c in por_categoria %}
+          <li>
+            <div class="categorias__fila"><span>{{ c.categoria }}</span><span>{{ c.total | clp }}</span></div>
+            {{ barra((c.total / maximo * 100) | round(1)) }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="vacio">Aún no hay egresos este mes.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Últimos movimientos</h2>
+    {% if ultimos %}
+      <table class="tabla tabla--compacta">
+        {% for m in ultimos %}
+          <tr>
+            <td class="tenue">{{ m.fecha | fecha }}</td>
+            <td>{{ m.descripcion or m.categoria }}</td>
+            <td class="monto {{ m.tipo }}">{{ '+' if m.tipo == 'ingreso' else '−' }}{{ m.monto | clp }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+      <a class="enlace" href="{{ url_for('movimientos.lista') }}">Ver todos →</a>
+    {% else %}
+      <p class="vacio">Todavía no registras movimientos. <a href="{{ url_for('movimientos.lista') }}">Agrega el primero</a>.</p>
+    {% endif %}
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Uso de tus créditos</h2>
+  {% if credito.cuentas %}
+    <ul class="categorias">
+      {% for cuenta, r, r_usd in credito.cuentas %}
+        <li>
+          <div class="categorias__fila">
+            <a href="{{ url_for('credito.lista', cuenta=cuenta.id) }}"><strong>{{ cuenta.nombre }}</strong></a>
+            <span class="tenue">{{ r.porcentaje_usado }}% usado · deuda {{ r.deuda | clp }}{% if r_usd and r_usd.deuda %} + {{ r_usd.deuda | usd }}{% endif %} · próxima cuota {{ r.proxima_cuota | clp }}</span>
+          </div>
+          {{ barra(r.porcentaje_usado if r.porcentaje_usado <= 100 else 100,
+                   'progreso--alerta' if r.porcentaje_usado >= 80 else '') }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="vacio">No tienes créditos registrados. <a href="{{ url_for('credito.lista') }}">Agrega uno</a>.</p>
+  {% endif %}
+</section>
+
+<script>
+  // En la app de escritorio se abre el diálogo "Guardar como" de Windows.
+  // En el navegador (modo desarrollo) el enlace descarga el archivo normalmente.
+  document.getElementById('exportar').addEventListener('click', async (evento) => {
+    const api = window.pywebview && window.pywebview.api;
+    if (!api || !api.exportar_excel) return;
+    evento.preventDefault();
+    const r = await api.exportar_excel();
+    if (!r || r.cancelado) return;
+    const aviso = document.createElement('div');
+    aviso.className = 'alerta alerta--' + (r.ok ? 'ok' : 'error');
+    aviso.textContent = r.ok ? 'Excel guardado en ' + r.ruta : 'No se pudo exportar: ' + r.error;
+    document.getElementById('avisos').replaceChildren(aviso);
+  });
+</script>
+{% endblock %}

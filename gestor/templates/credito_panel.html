@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tarjeta, barra %}
+{% from "_credito.html" import pestanas %}
+{% block titulo %}Panel de créditos{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <h1>Crédito</h1>
+</div>
+
+{{ pestanas(cuentas, 'panel') }}
+
+<section class="grilla-tarjetas">
+  {{ tarjeta('Deuda total en pesos', general.deuda | clp, 'negativo' if general.deuda else '',
+             'En ' ~ cuentas | length ~ (' crédito' if cuentas | length == 1 else ' créditos')) }}
+  {{ tarjeta('Cupo disponible en pesos', general.disponible | clp, 'negativo' if general.disponible < 0 else 'positivo',
+             'de ' ~ (cupo_total | clp) ~ ' · ' ~ uso ~ '% usado') }}
+  {{ tarjeta('Próximo mes pagarás', general.proxima_cuota | clp, '',
+             'Suma de las cuotas de ' ~ (columnas[0].mes | nombre_mes)) }}
+  {{ tarjeta('Intereses en compras vigentes', intereses | clp, 'negativo' if intereses else '',
+             'Lo que pagas de más por comprar en cuotas' if intereses else 'Sin compras con interés') }}
+</section>
+
+{% if general.usa_dolares %}
+<section class="panel panel--compacto">
+  <div class="categorias__fila">
+    <h2><span class="insignia">🌎 Internacional</span> Tus créditos en dólares</h2>
+    {% if general.cupo_usd %}<span class="tenue">{{ ((general.deuda_usd / general.cupo_usd * 100) | round(1)) }}% del cupo usado</span>{% endif %}
+  </div>
+  <div class="grilla-tarjetas grilla-tarjetas--interna">
+    {{ tarjeta('Deuda total en dólares', general.deuda_usd | usd, 'negativo' if general.deuda_usd else '') }}
+    {{ tarjeta('Cupo disponible en dólares', general.disponible_usd | usd,
+               'negativo' if general.disponible_usd < 0 else 'positivo') }}
+    {{ tarjeta('Cupo internacional total', general.cupo_usd | usd, '',
+               'Suma de los cupos en US$ de tus créditos') }}
+  </div>
+  {% if general.cupo_usd %}
+    {% set uso_usd = (general.deuda_usd / general.cupo_usd * 100) | round(1) %}
+    {{ barra(uso_usd if uso_usd <= 100 else 100, 'progreso--alerta' if uso_usd >= 80 else '') }}
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Tus créditos</h2>
+  <div class="tabla-scroll">
+  <table class="tabla tabla--creditos">
+    <thead>
+      <tr><th>Crédito</th><th class="der">Deuda</th><th class="der">Disponible</th><th>Uso del cupo</th><th class="der">Próxima cuota</th><th class="der">Internacional</th></tr>
+    </thead>
+    <tbody>
+      {% for cuenta, r, r_usd in general.cuentas %}
+        <tr>
+          <td><span class="punto serie-{{ loop.index0 % 6 }}"></span>
+              <a href="{{ url_for('credito.lista', cuenta=cuenta.id) }}"><strong>{{ cuenta.nombre }}</strong></a></td>
+          <td class="monto der">{{ r.deuda | clp }}</td>
+          <td class="monto der {{ 'egreso' if r.disponible < 0 }}">{{ r.disponible | clp }}</td>
+          <td class="celda-uso">
+            {{ barra(r.porcentaje_usado if r.porcentaje_usado <= 100 else 100,
+                     'progreso--alerta' if r.porcentaje_usado >= 80 else '') }}
+            <span class="tenue">{{ r.porcentaje_usado }}%</span>
+          </td>
+          <td class="monto der">{{ r.proxima_cuota | clp }}</td>
+          <td class="der">
+            {% if r_usd %}{{ r_usd.deuda | usd }}{% if r_usd.cupo %} <span class="tenue">de {{ r_usd.cupo | usd }}</span>{% endif %}
+            {% else %}<span class="tenue">—</span>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="categorias__fila">
+    <h2>Cuotas de los próximos 12 meses</h2>
+    <div class="leyenda">
+      {% for c in cuentas %}<span><span class="punto serie-{{ loop.index0 % 6 }}"></span>{{ c.nombre }}</span>{% endfor %}
+    </div>
+  </div>
+  {% if maximo %}
+    <div class="grafico-meses" role="img" aria-label="Cuotas por mes de los próximos 12 meses">
+      {% for col in columnas %}
+        <div class="grafico-meses__columna" title="{{ col.mes | nombre_mes }}: {{ col.total | clp }}">
+          <div class="grafico-meses__area">
+            <div class="grafico-meses__barra" style="height: {{ (col.total / maximo * 100) | round(1) }}%">
+              {% if col.total %}<span class="grafico-meses__valor">{{ col.total | clp }}</span>{% endif %}
+              {% for i, cuenta, monto in col.partes %}
+                <div class="serie-{{ i % 6 }}" style="flex-grow: {{ monto }}" title="{{ cuenta.nombre }}: {{ monto | clp }}"></div>
+              {% endfor %}
+            </div>
+          </div>
+          <span class="grafico-meses__mes">{{ (col.mes | nombre_mes)[:3] }}<br><span class="tenue">{{ col.mes[2:4] }}</span></span>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="tenue nota-chica">Según las cuotas de tus compras en pesos. La primera cuota se cobra el mes siguiente a la compra.</p>
+  {% else %}
+    <p class="vacio">No tienes cuotas por pagar en los próximos meses. 🎉</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>¿En qué usas tus tarjetas? <span class="tenue titulo-nota">desde {{ desde | fecha }}</span></h2>
+  {% if categorias %}
+    <ul class="categorias">
+      {% for c in categorias %}
+        <li>
+          <div class="categorias__fila"><span>{{ c.categoria }} <span class="tenue">· {{ c.cantidad }} compra{{ 's' if c.cantidad != 1 }}</span></span><span>{{ c.total | clp }}</span></div>
+          {{ barra((c.total / maximo_categoria * 100) | round(1)) }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="vacio">No hay compras en pesos en los últimos 6 meses.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+# ── Datos personales: NUNCA se suben ──
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Configuración y secretos ──
+.env
+
+# ── Entornos y archivos generados ──
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+instance/
+.DS_Store
+
+# ── Ejecutable generado con PyInstaller ──
+build/
+dist/
+*.spec

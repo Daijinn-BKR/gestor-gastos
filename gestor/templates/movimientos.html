@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tarjeta, boton_eliminar, lista_categorias %}
+{% block titulo %}Movimientos{% endblock %}
+{% macro encabezado_orden(col, texto, clase='') %}
+  {# Clic en la columna activa invierte el orden; en otra columna empieza descendente (fecha/monto) o A→Z (categoría) #}
+  {% set activa = orden.col == col %}
+  {% if activa %}{% set nueva = 'asc' if orden.dir == 'desc' else 'desc' %}
+  {% else %}{% set nueva = 'asc' if col == 'categoria' else 'desc' %}{% endif %}
+  <th class="{{ clase }}" aria-sort="{{ ('ascending' if orden.dir == 'asc' else 'descending') if activa else 'none' }}">
+    <a class="orden {{ 'orden--activo' if activa }}" href="{{ url_for('.lista', mes=mes, orden=col, dir=nueva) }}"
+       title="Ordenar por {{ texto | lower }}">
+      {{ texto }}<span class="orden__flecha">{{ ('▲' if orden.dir == 'asc' else '▼') if activa else '↕' }}</span>
+    </a>
+  </th>
+{% endmacro %}
+
+{% block contenido %}
+<div class="encabezado">
+  <h1>Ingresos y egresos</h1>
+  <nav class="selector-mes">
+    <a href="{{ url_for('.lista', mes=mes_anterior) }}" aria-label="Mes anterior">‹</a>
+    <span>{{ mes | nombre_mes }}</span>
+    <a href="{{ url_for('.lista', mes=mes_siguiente) }}" aria-label="Mes siguiente">›</a>
+  </nav>
+</div>
+
+<section class="grilla-tarjetas">
+  {{ tarjeta('Ingresos del mes', totales.ingresos | clp, 'positivo') }}
+  {{ tarjeta('Egresos del mes', totales.egresos | clp, 'negativo') }}
+  {{ tarjeta('Balance del mes', totales.balance | clp, 'positivo' if totales.balance >= 0 else 'negativo') }}
+  {{ tarjeta('Saldo total en cuenta', saldo | clp) }}
+</section>
+
+<section class="panel">
+  <h2>Nuevo movimiento</h2>
+  <form method="post" action="{{ url_for('.crear') }}" class="formulario">
+    <label>Tipo
+      <select name="tipo" required>
+        <option value="egreso" {{ 'selected' if form.tipo == 'egreso' }}>Egreso</option>
+        <option value="ingreso" {{ 'selected' if form.tipo == 'ingreso' }}>Ingreso</option>
+      </select>
+    </label>
+    <label>Fecha <input type="date" name="fecha" value="{{ form.fecha or hoy }}" required></label>
+    <label>Categoría <input name="categoria" list="categorias" placeholder="Alimentación" required></label>
+    <label class="ancho">Descripción <input name="descripcion" placeholder="Supermercado"></label>
+    <label>Monto <input name="monto" inputmode="numeric" placeholder="15.000" required></label>
+    <button class="boton">Agregar</button>
+  </form>
+  {{ lista_categorias(categorias) }}
+</section>
+
+<section class="panel">
+  <h2>Movimientos de {{ mes | nombre_mes }}</h2>
+  {% if movimientos %}
+    <div class="tabla-scroll">
+    <table class="tabla">
+      <thead><tr>
+        {{ encabezado_orden('fecha', 'Fecha') }}
+        {{ encabezado_orden('categoria', 'Categoría') }}
+        <th>Descripción</th>
+        {{ encabezado_orden('monto', 'Monto', 'der') }}
+        <th></th>
+      </tr></thead>
+      <tbody>
+        {% for m in movimientos %}
+          <tr>
+            <td>{{ m.fecha | fecha }}</td>
+            <td><span class="etiqueta">{{ m.categoria }}</span></td>
+            <td>{{ m.descripcion }}</td>
+            <td class="monto der {{ m.tipo }}">{{ '+' if m.tipo == 'ingreso' else '−' }}{{ m.monto | clp }}</td>
+            <td>{{ boton_eliminar(url_for('.eliminar', id=m.id)) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  {% else %}
+    <p class="vacio">No hay movimientos en este mes.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tarjeta, barra, boton_eliminar %}
+{% block titulo %}Ahorro{% endblock %}
+{% block contenido %}
+<h1>Cuenta de ahorro</h1>
+
+<section class="grilla-tarjetas">
+  {{ tarjeta('Saldo ahorrado', estado.saldo | clp, 'positivo') }}
+  {{ tarjeta('Meta', (estado.meta | clp) if estado.meta else 'Sin definir',
+             '', ('Te falta ' ~ (estado.falta | clp)) if estado.meta else '') }}
+  {{ tarjeta('Tasa anual', (estado.tasa | pct) if estado.tasa else 'Sin definir',
+             '', ('≈ ' ~ (estado.interes_dia | clp) ~ ' al día · ' ~ (estado.interes_mes | clp) ~ ' al mes') if estado.tasa else '') }}
+  {{ tarjeta('Interés en un año', (estado.interes_anio | clp) if estado.tasa else '—', 'positivo' if estado.interes_anio else '',
+             'Estimado con el saldo actual' if estado.tasa else '') }}
+</section>
+
+<div class="dos-columnas">
+  <section class="panel">
+    <div class="categorias__fila"><strong>Meta de ahorro</strong>
+      <form method="post" action="{{ url_for('.actualizar_meta') }}" class="formulario-linea">
+        <input name="meta" inputmode="numeric" placeholder="Nueva meta" aria-label="Nueva meta" required>
+        <button class="boton boton--secundario">Cambiar</button>
+      </form>
+    </div>
+    {{ barra(estado.progreso, 'progreso--ahorro') }}
+    <p class="tenue nota">{{ (estado.progreso ~ '% de la meta') if estado.meta else 'Define una meta para ver tu avance.' }}</p>
+  </section>
+
+  <section class="panel">
+    <div class="categorias__fila"><strong>Tasa de interés anual</strong>
+      <form method="post" action="{{ url_for('.actualizar_tasa') }}" class="formulario-linea">
+        <input name="tasa" inputmode="decimal" placeholder="Ej: 4,6" aria-label="Tasa anual en %"
+               value="{{ (estado.tasa | pct)[:-1] if estado.tasa else '' }}">
+        <button class="boton boton--secundario">Guardar</button>
+      </form>
+    </div>
+
+    <details class="calcular-tasa" {{ 'open' if not estado.tasa }}>
+      <summary>¿No sabes tu tasa? Calcúlala con lo que te pagan</summary>
+      <form method="post" action="{{ url_for('.calcular_tasa') }}" class="formulario-linea">
+        <span>Me pagan</span>
+        <input name="pago" inputmode="numeric" placeholder="$15" aria-label="Monto que te pagan" required>
+        <select name="periodo" aria-label="Cada cuánto">
+          {% for valor, texto in periodos.items() %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+        </select>
+        <button class="boton boton--secundario">Calcular</button>
+      </form>
+      <p class="tenue nota-chica">Se calcula con tu saldo actual en la app ({{ estado.saldo | clp }}).</p>
+    </details>
+
+    <form method="post" action="{{ url_for('.cambiar_modo') }}" class="formulario-linea modo-interes">
+      <label for="modo">Sumar intereses:</label>
+      <select name="modo" id="modo" onchange="this.form.submit()">
+        {% for valor, texto in modos.items() %}
+          <option value="{{ valor }}" {{ 'selected' if estado.modo == valor }}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="boton boton--secundario">Guardar</button></noscript>
+    </form>
+
+    {% if not estado.tasa %}
+      <p class="tenue nota">Escribe la tasa de tu banco o calcúlala arriba para estimar cuánto ganas.</p>
+    {% elif estado.modo == 'diario' %}
+      <p class="nota">✓ Cada día se suman ≈ <strong>{{ estado.interes_dia | clp }}</strong> a tu ahorro, en una fila por mes
+        <span class="tenue">(«Intereses … (automático)»)</span>.</p>
+    {% elif estado.modo == 'mensual' %}
+      <p class="nota">✓ El interés se acumula cada día y se suma el último día del mes.
+        Llevas <strong>{{ estado.pendiente | clp }}</strong> este mes.</p>
+    {% elif estado.saldo > 0 %}
+      <form method="post" action="{{ url_for('.registrar_intereses') }}" class="nota">
+        <button class="boton boton--secundario">Registrar interés del mes ({{ estado.interes_mes | clp }})</button>
+      </form>
+    {% endif %}
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Nuevo depósito o retiro</h2>
+  <form method="post" action="{{ url_for('.crear') }}" class="formulario">
+    <label>Tipo
+      <select name="tipo" required>
+        <option value="deposito">Depósito</option>
+        <option value="retiro">Retiro</option>
+      </select>
+    </label>
+    <label>Fecha <input type="date" name="fecha" value="{{ fecha_form or hoy }}" required></label>
+    <label class="ancho">Descripción <input name="descripcion" placeholder="Ahorro de octubre"></label>
+    <label>Monto <input name="monto" inputmode="numeric" placeholder="50.000" required></label>
+    <label class="check ancho"><input type="checkbox" name="vincular" checked> Reflejarlo en Movimientos (el depósito sale de tu cuenta, el retiro vuelve a ella)</label>
+    <button class="boton">Agregar</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Historial</h2>
+  {% if registros %}
+    <table class="tabla">
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th class="der">Monto</th><th></th></tr></thead>
+      <tbody>
+        {% for r in registros %}
+          <tr>
+            <td>{{ r.fecha | fecha }}</td>
+            <td><span class="etiqueta">{{ 'Depósito' if r.tipo == 'deposito' else 'Retiro' }}</span></td>
+            <td>{{ r.descripcion }}</td>
+            <td class="monto der {{ 'ingreso' if r.tipo == 'deposito' else 'egreso' }}">{{ '+' if r.tipo == 'deposito' else '−' }}{{ r.monto | clp }}</td>
+            <td>{{ boton_eliminar(url_for('.eliminar', id=r.id)) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="vacio">Aún no registras depósitos.</p>
+  {% endif %}
+</section>
+{% endblock %}

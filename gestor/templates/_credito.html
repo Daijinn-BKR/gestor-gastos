@@ -1,0 +1,26 @@
+{% macro form_cuenta(accion, boton, nombre='', cupo='', cupo_usd='', desde='') %}
+  <form method="post" action="{{ accion }}" class="formulario">
+    <label>Nombre <input name="nombre" value="{{ nombre }}" placeholder="Falabella, BCI…" maxlength="40" required></label>
+    <label>Cupo nacional ($) <input name="cupo" value="{{ cupo }}" inputmode="numeric" placeholder="800.000" required></label>
+    <label class="ancho">Cupo internacional (US$) <span class="tenue">— opcional, para compras en dólares</span>
+      <input name="cupo_usd" value="{{ cupo_usd }}" inputmode="decimal" placeholder="Ej: 100 · vacío = sin cupo internacional"></label>
+    {% if desde %}<input type="hidden" name="desde" value="{{ desde }}">{% endif %}
+    <button class="boton">{{ boton }}</button>
+  </form>
+{% endmacro %}
+
+{% macro pestanas(cuentas, activo) %}
+  <nav class="pestanas" aria-label="Cuentas de crédito">
+    <a href="{{ url_for('credito.lista') }}" class="pestanas__panel {{ 'activo' if activo == 'panel' }}">📊 Panel</a>
+    <span class="pestanas__separador" aria-hidden="true"></span>
+    {% for c in cuentas %}
+      <a href="{{ url_for('credito.lista', cuenta=c.id) }}" class="{{ 'activo' if c.id == activo }}">{{ c.nombre }}</a>
+    {% endfor %}
+    <details class="desplegable">
+      <summary class="pestanas__agregar">+ Agregar crédito</summary>
+      <div class="desplegable__panel">
+        {{ form_cuenta(url_for('credito.crear_cuenta'), 'Agregar', desde=activo if activo != 'panel' else '') }}
+      </div>
+    </details>
+  </nav>
+{% endmacro %}

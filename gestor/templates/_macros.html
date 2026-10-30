@@ -1,0 +1,23 @@
+{% macro tarjeta(etiqueta, valor, clase='', detalle='') %}
+  <div class="tarjeta {{ clase }}">
+    <span class="tarjeta__etiqueta">{{ etiqueta }}</span>
+    <strong class="tarjeta__valor">{{ valor }}</strong>
+    {% if detalle %}<span class="tarjeta__detalle">{{ detalle }}</span>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro barra(porcentaje, clase='') %}
+  <div class="progreso {{ clase }}"><div class="progreso__relleno" style="width: {{ porcentaje }}%"></div></div>
+{% endmacro %}
+
+{% macro boton_eliminar(url) %}
+  <form method="post" action="{{ url }}" onsubmit="return confirm('¿Eliminar este registro?')">
+    <button class="boton-icono" title="Eliminar" aria-label="Eliminar">✕</button>
+  </form>
+{% endmacro %}
+
+{% macro lista_categorias(categorias) %}
+  <datalist id="categorias">
+    {% for c in categorias %}<option value="{{ c }}">{% endfor %}
+  </datalist>
+{% endmacro %}

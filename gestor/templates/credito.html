@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tarjeta, barra, boton_eliminar, lista_categorias %}
+{% from "_credito.html" import form_cuenta, pestanas %}
+{% block titulo %}Crédito{% endblock %}
+
+{% macro dinero(valor, moneda) %}{{ valor | usd if moneda == 'USD' else valor | clp }}{% endmacro %}
+
+
+
+{% macro tabla_compras(lista, moneda) %}
+  <div class="tabla-scroll">
+  <table class="tabla">
+    <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th class="der">Monto</th><th>Cuotas</th><th class="der">Interés</th><th class="der">Total a pagar</th><th></th></tr></thead>
+    <tbody>
+      {% for c in lista %}
+        <tr>
+          <td>{{ c.fecha | fecha }}</td>
+          <td><span class="etiqueta">{{ c.categoria }}</span></td>
+          <td>{{ c.descripcion }}</td>
+          <td class="monto der">{{ dinero(c.monto, moneda) }}</td>
+          <td>
+            {% if c.cuotas == 1 %}
+              <span class="tenue">Sin cuotas</span>
+            {% else %}
+              {{ c.estado.facturadas }}/{{ c.cuotas }} · <span class="tenue">{{ dinero(c.estado.cuota, moneda) }} c/u</span>
+            {% endif %}
+          </td>
+          <td class="der">{% if c.interes %}{{ c.interes | pct }} <span class="tenue">mensual</span>{% else %}<span class="tenue">—</span>{% endif %}</td>
+          <td class="monto der">
+            {{ dinero(c.estado.total, moneda) }}
+            {% if c.estado.intereses %}<div class="tenue nota-monto">+{{ dinero(c.estado.intereses, moneda) }} en intereses</div>{% endif %}
+          </td>
+          <td>{{ boton_eliminar(url_for('.eliminar_compra', id=c.id)) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% endmacro %}
+
+{% block contenido %}
+<div class="encabezado">
+  <h1>Crédito</h1>
+</div>
+
+{% if not cuentas %}
+  <section class="panel">
+    <h2>Agrega tu primer crédito</h2>
+    <p class="tenue">Puedes tener varios, por ejemplo tu tarjeta Falabella y tu tarjeta BCI. Cada uno lleva sus propias compras, pagos y cupo, y si quieres, un cupo internacional en dólares.</p>
+    {{ form_cuenta(url_for('.crear_cuenta'), 'Agregar crédito') }}
+  </section>
+{% else %}
+
+{{ pestanas(cuentas, cuenta.id) }}
+
+<section class="grilla-tarjetas">
+  {{ tarjeta('Deuda actual', resumen.deuda | clp, 'negativo' if resumen.deuda else '', 'Incluye intereses de compras en cuotas') }}
+  {{ tarjeta('Cupo disponible', resumen.disponible | clp, 'negativo' if resumen.disponible < 0 else 'positivo') }}
+  {{ tarjeta('Próxima cuota estimada', resumen.proxima_cuota | clp) }}
+  {{ tarjeta('Cupo total', resumen.cupo | clp) }}
+</section>
+
+<section class="panel">
+  <div class="categorias__fila">
+    <span><strong>{{ cuenta.nombre }}</strong> · {{ resumen.porcentaje_usado }}% del cupo nacional usado</span>
+    <details class="desplegable desplegable--derecha">
+      <summary class="boton boton--secundario">Editar o eliminar</summary>
+      <div class="desplegable__panel">
+        {{ form_cuenta(url_for('.editar_cuenta', id=cuenta.id), 'Guardar cambios', cuenta.nombre, cuenta.cupo,
+                       (cuenta.cupo_usd | usd)[4:] if cuenta.cupo_usd else '') }}
+        <form method="post" action="{{ url_for('.eliminar_cuenta', id=cuenta.id) }}"
+              onsubmit="return confirm('¿Eliminar el crédito «{{ cuenta.nombre }}» con todas sus compras y pagos?\n\nLos egresos que ya registraste en Movimientos se mantienen.')">
+          <button class="boton boton--peligro">Eliminar este crédito</button>
+        </form>
+      </div>
+    </details>
+  </div>
+  {{ barra(resumen.porcentaje_usado if resumen.porcentaje_usado <= 100 else 100,
+           'progreso--alerta' if resumen.porcentaje_usado >= 80 else '') }}
+</section>
+
+{% if resumen_usd %}
+<section class="panel">
+  <div class="categorias__fila">
+    <span><span class="insignia">🌎 Internacional</span> deuda <strong>{{ resumen_usd.deuda | usd }}</strong>
+      {% if resumen_usd.cupo %} · disponible {{ resumen_usd.disponible | usd }} de {{ resumen_usd.cupo | usd }}{% endif %}</span>
+    {% if resumen_usd.cupo %}<span class="tenue">{{ resumen_usd.porcentaje_usado }}% usado</span>{% endif %}
+  </div>
+  {% if resumen_usd.cupo %}
+    {{ barra(resumen_usd.porcentaje_usado if resumen_usd.porcentaje_usado <= 100 else 100,
+             'progreso--alerta' if resumen_usd.porcentaje_usado >= 80 else '') }}
+  {% endif %}
+</section>
+{% endif %}
+
+<div class="dos-columnas">
+  <section class="panel">
+    <h2>Nueva compra en {{ cuenta.nombre }}</h2>
+    <form method="post" action="{{ url_for('.crear_compra', cuenta_id=cuenta.id) }}" class="formulario" data-moneda>
+      {% if resumen_usd %}
+        <label>Moneda
+          <select name="moneda">
+            <option value="CLP">Pesos ($)</option>
+            <option value="USD">Dólares (US$)</option>
+          </select>
+        </label>
+      {% endif %}
+      <label>Fecha <input type="date" name="fecha" value="{{ fecha_form or hoy }}" required></label>
+      <label>Categoría <input name="categoria" list="categorias" placeholder="Ropa" required></label>
+      <label class="ancho">Descripción <input name="descripcion" placeholder="Zapatillas"></label>
+      <label>Monto total <input name="monto" inputmode="decimal" placeholder="60.000" data-clp="60.000" data-usd="Ej: 100 o 12,50" required></label>
+      <label>Cuotas <input type="number" name="cuotas" min="1" max="48" value="1" required></label>
+      <label>Interés mensual (%) <input name="interes" inputmode="decimal" placeholder="0 = sin interés"></label>
+      <button class="boton">Agregar compra</button>
+    </form>
+    {{ lista_categorias(categorias) }}
+  </section>
+
+  <section class="panel">
+    <h2>Pagar {{ cuenta.nombre }}</h2>
+    <form method="post" action="{{ url_for('.crear_pago', cuenta_id=cuenta.id) }}" class="formulario" data-moneda>
+      {% if resumen_usd %}
+        <label>Moneda
+          <select name="moneda">
+            <option value="CLP">Pesos ($)</option>
+            <option value="USD">Dólares (US$)</option>
+          </select>
+        </label>
+      {% endif %}
+      <label>Fecha <input type="date" name="fecha" value="{{ fecha_form or hoy }}" required></label>
+      <label>Monto <input name="monto" inputmode="decimal" placeholder="{{ resumen.proxima_cuota }}"
+                          data-clp="{{ resumen.proxima_cuota }}" data-usd="Ej: 100 o 12,50" required></label>
+      {% if resumen_usd %}
+        <label class="solo-usd" hidden>Pagado en pesos <input name="monto_clp" inputmode="numeric" placeholder="Ej: 95.000"></label>
+      {% endif %}
+      <label class="ancho">Descripción <input name="descripcion" placeholder="Pago mensual"></label>
+      <label class="check ancho"><input type="checkbox" name="registrar_egreso" checked> Registrar también como egreso en Movimientos</label>
+      <button class="boton">Registrar pago</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Compras{% if resumen_usd %} en pesos{% endif %}</h2>
+  {% if compras.CLP %}
+    {{ tabla_compras(compras.CLP, 'CLP') }}
+  {% else %}
+    <p class="vacio">No hay compras registradas en {{ cuenta.nombre }}.</p>
+  {% endif %}
+</section>
+
+{% if resumen_usd %}
+<section class="panel">
+  <h2>Compras internacionales (US$)</h2>
+  {% if compras.USD %}
+    {{ tabla_compras(compras.USD, 'USD') }}
+  {% else %}
+    <p class="vacio">No hay compras en dólares. Elige «Dólares (US$)» al agregar una compra.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Pagos</h2>
+  {% if pagos %}
+    <table class="tabla">
+      <thead><tr><th>Fecha</th><th>Descripción</th><th class="der">Monto</th><th></th></tr></thead>
+      <tbody>
+        {% for p in pagos %}
+          <tr>
+            <td>{{ p.fecha | fecha }}</td>
+            <td>{{ p.descripcion or 'Pago' }}</td>
+            <td class="monto der ingreso">
+              {{ dinero(p.monto, p.moneda) }}
+              {% if p.moneda == 'USD' and p.monto_clp %}<div class="tenue nota-monto">pagado con {{ p.monto_clp | clp }}</div>{% endif %}
+            </td>
+            <td>{{ boton_eliminar(url_for('.eliminar_pago', id=p.id)) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="vacio">No hay pagos registrados en {{ cuenta.nombre }}.</p>
+  {% endif %}
+</section>
+
+<script>
+  // Al elegir la moneda se ajusta el ejemplo del monto y aparece "Pagado en pesos" para pagos en dólares.
+  document.querySelectorAll('form[data-moneda]').forEach((form) => {
+    const select = form.querySelector('select[name=moneda]');
+    if (!select) return;
+    const actualizar = () => {
+      const enDolares = select.value === 'USD';
+      const monto = form.querySelector('input[name=monto]');
+      monto.placeholder = enDolares ? monto.dataset.usd : monto.dataset.clp;
+      form.querySelectorAll('.solo-usd').forEach((el) => { el.hidden = !enDolares; });
+    };
+    select.addEventListener('change', actualizar);
+    actualizar();
+  });
+</script>
+{% endif %}
+{% endblock %}

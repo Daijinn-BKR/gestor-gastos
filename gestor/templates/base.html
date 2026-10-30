@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Gestor de gastos{% endblock %} · Gestor de gastos</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="barra">
+    <div class="contenedor barra__fila">
+      <a class="marca" href="{{ url_for('resumen.inicio') }}">💰 Gestor de gastos</a>
+      <nav class="nav">
+        {% set paginas = [
+          ('resumen', 'resumen.inicio', 'Resumen'),
+          ('movimientos', 'movimientos.lista', 'Movimientos'),
+          ('credito', 'credito.lista', 'Crédito'),
+          ('ahorro', 'ahorro.lista', 'Ahorro'),
+        ] %}
+        {% for bp, endpoint, texto in paginas %}
+          <a href="{{ url_for(endpoint) }}" class="{{ 'activo' if request.blueprint == bp }}">{{ texto }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for tipo, texto in mensajes %}
+        <div class="alerta alerta--{{ tipo }}">{{ texto }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <footer class="pie contenedor">Tus datos se guardan solo en este computador.</footer>
+</body>
+</html>
