@@ -1,0 +1,112 @@
+"""Ajustes: fondo de pantalla personalizado.
+
+La imagen se guarda en la carpeta de datos del usuario (junto a gastos.db), nunca
+dentro del proyecto: así una imagen personal no termina subida a GitHub."""
+from pathlib import Path
+
+from flask import (Blueprint, abort, current_app, flash, redirect,
+                   render_template, request, send_file, url_for)
+
+from ..db import get_config, set_config
+
+bp = Blueprint("ajustes", __name__, url_prefix="/ajustes")
+
+# Formatos aceptados, reconocidos por sus primeros bytes (no por el nombre del archivo)
+FIRMAS = {
+    "jpg": [b"\xff\xd8\xff"],
+    "png": [b"\x89PNG\r\n\x1a\n"],
+    "webp": [b"RIFF"],
+    "gif": [b"GIF87a", b"GIF89a"],
+}
+TAMANO_MAXIMO = 15 * 1024 * 1024  # 15 MB
+DIFUMINADO_POR_DEFECTO = 6
+
+
+def _carpeta() -> Path:
+    return Path(current_app.config["DATABASE"]).parent
+
+
+def archivo_fondo() -> Path | None:
+    for ext in FIRMAS:
+        ruta = _carpeta() / f"fondo.{ext}"
+        if ruta.exists():
+            return ruta
+    return None
+
+
+def info_fondo() -> dict | None:
+    """Datos que usa base.html para dibujar el fondo (None si no hay)."""
+    ruta = archivo_fondo()
+    if not ruta:
+        return None
+    return {
+        "url": url_for("ajustes.imagen_fondo", v=int(ruta.stat().st_mtime)),  # ?v= evita caché vieja
+        "difuminado": get_config("fondo_difuminado", DIFUMINADO_POR_DEFECTO),
+    }
+
+
+def _formato(datos: bytes) -> str | None:
+    for ext, firmas in FIRMAS.items():
+        if any(datos.startswith(f) for f in firmas):
+            if ext == "webp" and datos[8:12] != b"WEBP":
+                continue
+            return ext
+    return None
+
+
+@bp.get("/")
+def inicio():
+    return render_template("ajustes.html", fondo=info_fondo(),
+                           difuminado=get_config("fondo_difuminado", DIFUMINADO_POR_DEFECTO))
+
+
+@bp.get("/fondo")
+def imagen_fondo():
+    ruta = archivo_fondo()
+    if not ruta:
+        abort(404)
+    return send_file(ruta, max_age=0)
+
+
+@bp.post("/fondo")
+def subir_fondo():
+    archivo = request.files.get("imagen")
+    if not archivo or not archivo.filename:
+        flash("Elige una imagen.", "error")
+        return redirect(url_for(".inicio"))
+    datos = archivo.read(TAMANO_MAXIMO + 1)
+    if len(datos) > TAMANO_MAXIMO:
+        flash("La imagen es muy grande (máximo 15 MB).", "error")
+        return redirect(url_for(".inicio"))
+    ext = _formato(datos)
+    if not ext:
+        flash("Ese archivo no es una imagen válida. Usa JPG, PNG, WEBP o GIF.", "error")
+        return redirect(url_for(".inicio"))
+
+    _borrar_fondo()
+    (_carpeta() / f"fondo.{ext}").write_bytes(datos)
+    flash("Fondo de pantalla actualizado.", "ok")
+    return redirect(url_for(".inicio"))
+
+
+@bp.post("/fondo/difuminado")
+def cambiar_difuminado():
+    try:
+        valor = max(0, min(30, int(request.form.get("difuminado", DIFUMINADO_POR_DEFECTO))))
+    except ValueError:
+        valor = DIFUMINADO_POR_DEFECTO
+    set_config("fondo_difuminado", valor)
+    flash("Difuminado actualizado.", "ok")
+    return redirect(url_for(".inicio"))
+
+
+@bp.post("/fondo/quitar")
+def quitar_fondo():
+    _borrar_fondo()
+    flash("Fondo de pantalla quitado.", "ok")
+    return redirect(url_for(".inicio"))
+
+
+def _borrar_fondo():
+    for ext in FIRMAS:
+        (_carpeta() / f"fondo.{ext}").unlink(missing_ok=True)

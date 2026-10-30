@@ -6,7 +6,11 @@
   <title>{% block titulo %}Gestor de gastos{% endblock %} · Gestor de gastos</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="{{ 'con-fondo' if fondo }}">
+  {% if fondo %}
+    <div class="fondo-app" aria-hidden="true"
+         style="background-image: url('{{ fondo.url }}'); filter: blur({{ fondo.difuminado }}px)"></div>
+  {% endif %}
   <header class="barra">
     <div class="contenedor barra__fila">
       <a class="marca" href="{{ url_for('resumen.inicio') }}">💰 Gestor de gastos</a>
@@ -20,6 +24,8 @@
         {% for bp, endpoint, texto in paginas %}
           <a href="{{ url_for(endpoint) }}" class="{{ 'activo' if request.blueprint == bp }}">{{ texto }}</a>
         {% endfor %}
+        <a href="{{ url_for('ajustes.inicio') }}" class="nav__icono {{ 'activo' if request.blueprint == 'ajustes' }}"
+           title="Ajustes" aria-label="Ajustes">⚙️</a>
       </nav>
     </div>
   </header>

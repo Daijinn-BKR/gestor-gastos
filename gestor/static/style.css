@@ -211,3 +211,38 @@ input:focus, select:focus { outline: 2px solid var(--primario-texto); outline-of
 .panel h2 .insignia { vertical-align: 2px; }
 .categorias__fila h2 { margin: 0; }
 .panel > .categorias__fila:first-child { margin-bottom: 14px; }
+
+/* ── Fondo de pantalla personalizado ── */
+.fondo-app {
+  position: fixed; inset: -40px;           /* se agranda para que el difuminado no deje bordes claros */
+  z-index: -2;
+  background-size: cover; background-position: center;
+}
+body.con-fondo::before {                    /* velo para que el texto siempre se lea bien */
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  background: color-mix(in srgb, var(--fondo) 30%, transparent);
+}
+body.con-fondo { background: transparent; }
+html:has(body.con-fondo) { background: var(--fondo); }
+body.con-fondo .barra { background: color-mix(in srgb, var(--superficie) 80%, transparent); backdrop-filter: blur(12px); }
+body.con-fondo .panel,
+body.con-fondo .tarjeta { background: color-mix(in srgb, var(--superficie) 82%, transparent); backdrop-filter: blur(10px); }
+body.con-fondo h1 { display: inline-block; padding: 2px 14px; border-radius: 10px;
+                    background: color-mix(in srgb, var(--superficie) 80%, transparent); backdrop-filter: blur(10px); }
+body.con-fondo .pie { color: var(--texto); }
+body.con-fondo .pestanas > a, body.con-fondo .selector-mes a { backdrop-filter: blur(10px); }
+body.con-fondo .grilla-tarjetas--interna .tarjeta { background: color-mix(in srgb, var(--fondo) 70%, transparent); }
+
+.nav__icono { font-size: 1rem; }
+
+/* Página de ajustes */
+.ajustes-fondo { display: grid; grid-template-columns: minmax(200px, 320px) 1fr; gap: 20px; align-items: start; margin-top: 12px; }
+.ajustes-fondo__vista { aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; border: 1px solid var(--borde); position: relative; }
+.ajustes-fondo__vista--vacia { display: grid; place-items: center; background: var(--fondo); }
+.ajustes-fondo__imagen { position: absolute; inset: -10px; background-size: cover; background-position: center; }
+.ajustes-fondo__opciones { display: grid; gap: 12px; }
+.ajustes-fondo__opciones input[type="file"] { width: auto; flex: 1; min-width: 0; background: var(--superficie); }
+.difuminado { align-items: center; }
+.difuminado input[type="range"] { width: 200px; padding: 0; accent-color: var(--primario-texto); }
+.boton--angosto { width: auto; }
+@media (max-width: 640px) { .ajustes-fondo { grid-template-columns: 1fr; } }

@@ -35,6 +35,7 @@ Además, una página de **Resumen** junta lo más importante del mes y permite *
 - Pagos de tarjeta y depósitos de ahorro pueden reflejarse automáticamente como movimientos de la cuenta; si los borras, el movimiento vinculado también se borra.
 - Validaciones: no deja pagar más que la deuda ni retirar más de lo ahorrado.
 - Funciona sin internet; los datos nunca salen de tu computador.
+- Fondo de pantalla personalizado con difuminado ajustable (en ⚙️ Ajustes). La imagen se guarda junto a tus datos, fuera del proyecto.
 - Modo oscuro automático. Los gráficos se dibujan con HTML y CSS, sin librerías externas.
 - Tests con `pytest` y GitHub Actions.
 

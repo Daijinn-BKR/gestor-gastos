@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Ajustes{% endblock %}
+{% block contenido %}
+<h1>Ajustes</h1>
+
+<section class="panel">
+  <h2>Fondo de pantalla</h2>
+  <p class="tenue nota-chica">La imagen se guarda solo en este computador, junto a tus datos. No forma parte del proyecto, así que nunca se sube a GitHub.</p>
+
+  <div class="ajustes-fondo">
+    <div class="ajustes-fondo__vista {{ '' if fondo else 'ajustes-fondo__vista--vacia' }}">
+      {% if fondo %}
+        <div class="ajustes-fondo__imagen" style="background-image: url('{{ fondo.url }}'); filter: blur({{ difuminado / 3 }}px)"></div>
+      {% else %}
+        <span class="tenue">Sin fondo</span>
+      {% endif %}
+    </div>
+
+    <div class="ajustes-fondo__opciones">
+      <form method="post" action="{{ url_for('.subir_fondo') }}" enctype="multipart/form-data" class="formulario-linea">
+        <input type="file" name="imagen" accept="image/jpeg,image/png,image/webp,image/gif" required aria-label="Imagen de fondo">
+        <button class="boton">{{ 'Cambiar imagen' if fondo else 'Usar esta imagen' }}</button>
+      </form>
+
+      {% if fondo %}
+        <form method="post" action="{{ url_for('.cambiar_difuminado') }}" class="formulario-linea difuminado">
+          <label for="difuminado">Difuminado</label>
+          <input type="range" id="difuminado" name="difuminado" min="0" max="30" value="{{ difuminado }}"
+                 oninput="document.querySelector('.fondo-app').style.filter = 'blur(' + this.value + 'px)';
+                          document.getElementById('valor-difuminado').textContent = this.value == 0 ? 'Nada' : this.value;">
+          <span id="valor-difuminado" class="tenue">{{ 'Nada' if difuminado == 0 else difuminado }}</span>
+          <button class="boton boton--secundario">Guardar</button>
+        </form>
+        <p class="tenue nota-chica">Mueve la barra para ver el cambio al instante y luego presiona Guardar.</p>
+
+        <form method="post" action="{{ url_for('.quitar_fondo') }}" class="nota"
+              onsubmit="return confirm('¿Quitar el fondo de pantalla?')">
+          <button class="boton boton--peligro boton--angosto">Quitar fondo</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

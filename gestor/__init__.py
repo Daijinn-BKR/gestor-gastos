@@ -46,13 +46,15 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.jinja_env.filters["pct"] = pct
     app.jinja_env.filters["usd"] = usd
 
+    app.config.setdefault("MAX_CONTENT_LENGTH", 16 * 1024 * 1024)  # subida del fondo de pantalla
+
+    from .views import ahorro, ajustes, credito, movimientos, resumen
+
     @app.context_processor
     def variables_globales():
-        return {"hoy": date.today().isoformat()}
+        return {"hoy": date.today().isoformat(), "fondo": ajustes.info_fondo()}
 
-    from .views import ahorro, credito, movimientos, resumen
-
-    for modulo in (resumen, movimientos, credito, ahorro):
+    for modulo in (resumen, movimientos, credito, ahorro, ajustes):
         app.register_blueprint(modulo.bp)
 
     return app
