@@ -38,8 +38,28 @@
         <div class="alerta alerta--{{ tipo }}">{{ texto }}</div>
       {% endfor %}
     {% endwith %}
+    <div id="avisos"></div>
     {% block contenido %}{% endblock %}
   </main>
+
+  <script>
+    // Botones con data-guardar="metodo": en la app de escritorio abren el diálogo
+    // "Guardar como" (main.Api). En el navegador el enlace descarga el archivo normalmente.
+    document.querySelectorAll('[data-guardar]').forEach((boton) => {
+      boton.addEventListener('click', async (evento) => {
+        const api = window.pywebview && window.pywebview.api;
+        const metodo = boton.dataset.guardar;
+        if (!api || !api[metodo]) return;
+        evento.preventDefault();
+        const r = await api[metodo]();
+        if (!r || r.cancelado) return;
+        const aviso = document.createElement('div');
+        aviso.className = 'alerta alerta--' + (r.ok ? 'ok' : 'error');
+        aviso.textContent = r.ok ? 'Archivo guardado en ' + r.ruta : 'No se pudo guardar: ' + r.error;
+        (document.getElementById('avisos') || document.querySelector('main')).prepend(aviso);
+      });
+    });
+  </script>
 
   <footer class="pie contenedor">Tus datos se guardan solo en este computador.</footer>
 </body>

@@ -252,3 +252,31 @@ def test_seed_no_mezcla_con_datos_existentes(app):
     assert contar(app, "movimientos") > 0
     # Segunda vez: la base ya tiene datos, debe negarse
     assert runner.invoke(args=["seed"]).exit_code != 0
+
+
+def test_resumen_navega_por_meses(client):
+    from datetime import date
+    from gestor.utils import mover_mes
+    actual = date.today().strftime("%Y-%m")
+    anterior = mover_mes(actual, -1)
+
+    client.post("/movimientos/", data={"tipo": "ingreso", "fecha": f"{anterior}-05",
+                                       "categoria": "Sueldo", "monto": "900000"})
+    client.post("/movimientos/", data={"tipo": "egreso", "fecha": f"{actual}-01",
+                                       "categoria": "Vivienda", "monto": "300000"})
+
+    html = client.get("/").get_data(as_text=True)
+    assert 'aria-label="Mes siguiente"' not in html          # no se puede ir al futuro
+    assert "$600.000" in html                                # saldo actual: 900.000 − 300.000
+
+    html = client.get(f"/?mes={anterior}").get_data(as_text=True)
+    assert "$900.000" in html                                # saldo al cierre del mes anterior
+    assert "Vivienda" not in html                            # el egreso es del mes siguiente
+    assert "al cierre de" in html and "Ir al mes actual" in html
+
+
+def test_resumen_limites_de_meses(client):
+    html = client.get("/?mes=2026-01").get_data(as_text=True)
+    assert "enero 2026" in html and 'aria-label="Mes anterior"' not in html
+    assert "enero 2026" in client.get("/?mes=2025-06").get_data(as_text=True)   # antes de enero 2026 → enero
+    assert 'aria-label="Mes siguiente"' not in client.get("/?mes=2099-01").get_data(as_text=True)

@@ -22,13 +22,19 @@ def listar_cuentas(conn):
     return conn.execute("SELECT * FROM credito_cuentas ORDER BY id").fetchall()
 
 
-def resumen_cuenta(conn, cuenta, hoy: date | None = None, moneda: str = "CLP"):
-    """Deuda, cupo disponible y próxima cuota de una cuenta, en pesos o en dólares (centavos)."""
-    filtro = "WHERE cuenta_id = ? AND moneda = ?"
-    compras = conn.execute(f"SELECT * FROM credito_compras {filtro}", (cuenta["id"], moneda)).fetchall()
-    pagos = conn.execute(f"SELECT * FROM credito_pagos {filtro}", (cuenta["id"], moneda)).fetchall()
+def resumen_cuenta(conn, cuenta, hoy: date | None = None, moneda: str = "CLP",
+                   hasta: str | None = None):
+    """Deuda, cupo disponible y próxima cuota de una cuenta, en pesos o en dólares (centavos).
+
+    Con `hasta` (AAAA-MM-DD) solo cuenta compras y pagos hasta esa fecha: así el Resumen
+    de un mes pasado muestra la deuda que había al cierre de ese mes."""
+    hoy = hoy or date.today()
+    filtro = "WHERE cuenta_id = ? AND moneda = ? AND fecha <= ?"
+    args = (cuenta["id"], moneda, hasta or "9999-12-31")
+    compras = conn.execute(f"SELECT * FROM credito_compras {filtro}", args).fetchall()
+    pagos = conn.execute(f"SELECT * FROM credito_pagos {filtro}", args).fetchall()
     cupo = cuenta["cupo"] if moneda == "CLP" else cuenta["cupo_usd"]
-    return resumen_credito(compras, pagos, cupo, hoy or date.today())
+    return resumen_credito(compras, pagos, cupo, hoy)
 
 
 def usa_dolares(conn, cuenta) -> bool:
@@ -42,12 +48,12 @@ def usa_dolares(conn, cuenta) -> bool:
     ).fetchone() is not None
 
 
-def resumen_general(conn, hoy: date | None = None) -> dict:
+def resumen_general(conn, hoy: date | None = None, hasta: str | None = None) -> dict:
     """Totales de todas las cuentas de crédito (pesos y dólares por separado)."""
     detalle = []
     for c in listar_cuentas(conn):
-        r_usd = resumen_cuenta(conn, c, hoy, "USD") if usa_dolares(conn, c) else None
-        detalle.append((c, resumen_cuenta(conn, c, hoy), r_usd))
+        r_usd = resumen_cuenta(conn, c, hoy, "USD", hasta) if usa_dolares(conn, c) else None
+        detalle.append((c, resumen_cuenta(conn, c, hoy, "CLP", hasta), r_usd))
     return {
         "cuentas": detalle,
         "deuda": sum(r.deuda for _, r, _ in detalle),

@@ -46,7 +46,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.jinja_env.filters["pct"] = pct
     app.jinja_env.filters["usd"] = usd
 
-    app.config.setdefault("MAX_CONTENT_LENGTH", 16 * 1024 * 1024)  # subida del fondo de pantalla
+    app.config.setdefault("MAX_CONTENT_LENGTH", 256 * 1024 * 1024)  # fondo de pantalla y respaldos
 
     from .views import ahorro, ajustes, credito, movimientos, resumen
 

@@ -19,32 +19,44 @@ class Api:
         self._app = app
         self._ventana = None
 
-    def exportar_excel(self):
+    def _guardar_como(self, nombre: str, tipo: str, extension: str, generar):
+        """Abre el diálogo "Guardar como" y escribe lo que devuelve generar(conn, app)."""
         import webview
 
         from gestor.db import get_db
-        from gestor.exportar import generar_excel, nombre_archivo
 
         try:
             # pywebview 6 usa FileDialog.SAVE; versiones anteriores, SAVE_DIALOG
             dialogo = getattr(getattr(webview, "FileDialog", None), "SAVE", None) or webview.SAVE_DIALOG
             ruta = self._ventana.create_file_dialog(
-                dialogo, save_filename=nombre_archivo(), file_types=("Archivos de Excel (*.xlsx)",)
+                dialogo, save_filename=nombre, file_types=(f"{tipo} (*{extension})",)
             )
             if not ruta:
                 return {"ok": False, "cancelado": True}
             if isinstance(ruta, (list, tuple)):
                 ruta = ruta[0]
             ruta = Path(ruta)
-            if ruta.suffix.lower() != ".xlsx":
-                ruta = ruta.with_name(ruta.name + ".xlsx")
+            if ruta.suffix.lower() != extension:
+                ruta = ruta.with_name(ruta.name + extension)
             with self._app.app_context():
-                ruta.write_bytes(generar_excel(get_db()))
+                ruta.write_bytes(generar(get_db(), self._app))
             return {"ok": True, "ruta": str(ruta)}
         except PermissionError:
-            return {"ok": False, "error": "el archivo está abierto en Excel o no hay permiso para guardarlo."}
+            return {"ok": False, "error": "el archivo está abierto en otro programa o no hay permiso para guardarlo."}
         except Exception as e:  # se muestra en la ventana en vez de fallar en silencio
             return {"ok": False, "error": str(e)}
+
+    def exportar_excel(self):
+        from gestor.exportar import generar_excel, nombre_archivo
+
+        return self._guardar_como(nombre_archivo(), "Archivos de Excel", ".xlsx",
+                                  lambda conn, app: generar_excel(conn))
+
+    def exportar_respaldo(self):
+        from gestor.respaldo import generar_respaldo, nombre_archivo
+
+        return self._guardar_como(nombre_archivo(), "Respaldo del Gestor de gastos", ".zip",
+                                  lambda conn, app: generar_respaldo(conn, Path(app.config["DATABASE"]).parent))
 
 
 def preparar_demo():

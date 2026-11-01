@@ -1,14 +1,15 @@
-"""Ajustes: fondo de pantalla y color de acento.
+"""Ajustes: color de acento, fondo de pantalla y respaldo de datos (exportar/importar).
 
 La imagen se guarda en la carpeta de datos del usuario (junto a gastos.db), nunca
 dentro del proyecto: así una imagen personal no termina subida a GitHub."""
+from io import BytesIO
 from pathlib import Path
 
 from flask import (Blueprint, abort, current_app, flash, redirect,
                    render_template, request, send_file, url_for)
 
-from .. import colores
-from ..db import get_config, get_config_texto, set_config
+from .. import colores, respaldo
+from ..db import get_config, get_config_texto, get_db, set_config
 
 bp = Blueprint("ajustes", __name__, url_prefix="/ajustes")
 
@@ -65,7 +66,34 @@ def inicio():
     return render_template("ajustes.html", fondo=info_fondo(),
                            difuminado=get_config("fondo_difuminado", DIFUMINADO_POR_DEFECTO),
                            color=color_acento(), predefinidos=colores.PREDEFINIDOS,
-                           color_por_defecto=colores.COLOR_POR_DEFECTO)
+                           color_por_defecto=colores.COLOR_POR_DEFECTO,
+                           carpeta_datos=str(_carpeta()))
+
+
+# ── Respaldo: exportar e importar todos los datos ───────────────────────
+
+@bp.get("/respaldo")
+def exportar_respaldo():
+    """Descarga directa (modo navegador). En la app de escritorio se usa main.Api."""
+    return send_file(BytesIO(respaldo.generar_respaldo(get_db(), _carpeta())),
+                     mimetype="application/zip", as_attachment=True,
+                     download_name=respaldo.nombre_archivo())
+
+
+@bp.post("/respaldo/importar")
+def importar_respaldo():
+    archivo = request.files.get("archivo")
+    if not archivo or not archivo.filename:
+        flash("Elige el archivo de respaldo.", "error")
+        return redirect(url_for(".inicio"))
+    try:
+        copia = respaldo.importar_respaldo(get_db(), archivo.read(), _carpeta(), _formato)
+    except respaldo.ErrorRespaldo as e:
+        flash(str(e), "error")
+        return redirect(url_for(".inicio"))
+    detalle = f" Tus datos anteriores quedaron guardados en {copia.name}." if copia else ""
+    flash("Datos importados." + detalle, "ok")
+    return redirect(url_for(".inicio"))
 
 
 @bp.post("/color")

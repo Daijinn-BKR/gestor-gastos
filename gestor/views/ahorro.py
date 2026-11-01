@@ -29,8 +29,10 @@ PERIODOS = {"dia": "al día", "mes": "al mes", "anio": "al año"}
 
 # ── Estado ───────────────────────────────────────────────────────────────
 
-def estado_ahorro(conn) -> dict:
-    registros = conn.execute("SELECT tipo, monto FROM ahorro").fetchall()
+def estado_ahorro(conn, hasta: str | None = None) -> dict:
+    """Saldo, meta e intereses (opcionalmente, con el saldo al cierre de la fecha `hasta`)."""
+    registros = conn.execute("SELECT tipo, monto FROM ahorro WHERE fecha <= ?",
+                             (hasta or "9999-12-31",)).fetchall()
     saldo = saldo_ahorro(registros)
     meta = get_config("meta_ahorro", 0)
     tasa = get_config("tasa_ahorro", 0)

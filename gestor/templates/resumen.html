@@ -3,10 +3,28 @@
 {% block titulo %}Resumen{% endblock %}
 {% block contenido %}
 <div class="encabezado">
-  <h1>Resumen de {{ mes | nombre_mes }}</h1>
-  <a class="boton" id="exportar" href="{{ url_for('resumen.exportar') }}">⬇ Exportar a Excel</a>
+  <h1>Resumen</h1>
+  <nav class="selector-mes" aria-label="Cambiar de mes">
+    {% if mes_anterior %}
+      <a href="{{ url_for('resumen.inicio', mes=mes_anterior) }}" aria-label="Mes anterior" title="Mes anterior">‹</a>
+    {% else %}
+      <span class="selector-mes__flecha--off" aria-hidden="true">‹</span>
+    {% endif %}
+    <span>{{ mes | nombre_mes }}</span>
+    {% if mes_siguiente %}
+      <a href="{{ url_for('resumen.inicio', mes=mes_siguiente) }}" aria-label="Mes siguiente" title="Mes siguiente">›</a>
+    {% else %}
+      <span class="selector-mes__flecha--off" aria-hidden="true">›</span>
+    {% endif %}
+    {% if not es_actual %}
+      <a class="selector-mes__hoy" href="{{ url_for('resumen.inicio') }}">Ir al mes actual</a>
+    {% endif %}
+  </nav>
+  <a class="boton" id="exportar" href="{{ url_for('resumen.exportar') }}" data-guardar="exportar_excel">⬇ Exportar a Excel</a>
 </div>
-<div id="avisos"></div>
+{% if not es_actual %}
+  <p class="tenue nota-chica aviso-mes">Saldos, deuda y ahorro al cierre de {{ mes | nombre_mes }}.</p>
+{% endif %}
 
 <section class="grilla-tarjetas">
   {{ tarjeta('Saldo en cuenta', saldo | clp, 'negativo' if saldo < 0 else '') }}
@@ -33,12 +51,12 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p class="vacio">Aún no hay egresos este mes.</p>
+      <p class="vacio">No hay egresos en este mes.</p>
     {% endif %}
   </section>
 
   <section class="panel">
-    <h2>Últimos movimientos</h2>
+    <h2>Últimos movimientos del mes</h2>
     {% if ultimos %}
       <table class="tabla tabla--compacta">
         {% for m in ultimos %}
@@ -49,9 +67,9 @@
           </tr>
         {% endfor %}
       </table>
-      <a class="enlace" href="{{ url_for('movimientos.lista') }}">Ver todos →</a>
+      <a class="enlace" href="{{ url_for('movimientos.lista', mes=mes) }}">Ver todos los de {{ mes | nombre_mes }} →</a>
     {% else %}
-      <p class="vacio">Todavía no registras movimientos. <a href="{{ url_for('movimientos.lista') }}">Agrega el primero</a>.</p>
+      <p class="vacio">No hay movimientos en {{ mes | nombre_mes }}. <a href="{{ url_for('movimientos.lista') }}">Ir a Movimientos</a>.</p>
     {% endif %}
   </section>
 </div>
@@ -76,19 +94,4 @@
   {% endif %}
 </section>
 
-<script>
-  // En la app de escritorio se abre el diálogo "Guardar como" de Windows.
-  // En el navegador (modo desarrollo) el enlace descarga el archivo normalmente.
-  document.getElementById('exportar').addEventListener('click', async (evento) => {
-    const api = window.pywebview && window.pywebview.api;
-    if (!api || !api.exportar_excel) return;
-    evento.preventDefault();
-    const r = await api.exportar_excel();
-    if (!r || r.cancelado) return;
-    const aviso = document.createElement('div');
-    aviso.className = 'alerta alerta--' + (r.ok ? 'ok' : 'error');
-    aviso.textContent = r.ok ? 'Excel guardado en ' + r.ruta : 'No se pudo exportar: ' + r.error;
-    document.getElementById('avisos').replaceChildren(aviso);
-  });
-</script>
 {% endblock %}

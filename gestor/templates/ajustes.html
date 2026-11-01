@@ -1,5 +1,27 @@
 {% extends "base.html" %}
-{% block titulo %}Ajustes{% endblock %}
+{% block titulo %}Ajustes<section class="panel" id="datos">
+  <h2>Tus datos</h2>
+  <p class="tenue nota-chica">Guarda todo en un solo archivo (movimientos, créditos, ahorro, color y fondo) para tener un respaldo o pasarlo a otro computador.</p>
+
+  <div class="dos-columnas datos">
+    <div>
+      <h3>Exportar</h3>
+      <p class="nota-chica">Crea un archivo <code>.zip</code> con todos tus datos. Guárdalo en un lugar seguro: tiene tu información financiera.</p>
+      <a class="boton" href="{{ url_for('.exportar_respaldo') }}" data-guardar="exportar_respaldo">⬇ Exportar mis datos</a>
+    </div>
+    <div>
+      <h3>Importar</h3>
+      <p class="nota-chica"><strong>Reemplaza todos tus datos actuales</strong> por los del archivo. Antes se guarda una copia automática de lo que tienes ahora.</p>
+      <form method="post" action="{{ url_for('.importar_respaldo') }}" enctype="multipart/form-data" class="formulario-linea"
+            onsubmit="return confirm('Esto reemplaza TODOS tus datos actuales por los del archivo.\n\nSe guardará una copia de seguridad de lo que tienes ahora. ¿Continuar?')">
+        <input type="file" name="archivo" accept=".zip,.db" required aria-label="Archivo de respaldo">
+        <button class="boton boton--secundario">Importar</button>
+      </form>
+    </div>
+  </div>
+  <p class="tenue nota-chica nota">Carpeta de datos: <code>{{ carpeta_datos }}</code> — ahí también quedan las copias automáticas (<code>gastos.respaldo-…db</code>).</p>
+</section>
+{% endblock %}
 {% block contenido %}
 <h1>Ajustes</h1>
 
@@ -76,5 +98,27 @@
       {% endif %}
     </div>
   </div>
+</section>
+<section class="panel" id="datos">
+  <h2>Tus datos</h2>
+  <p class="tenue nota-chica">Guarda todo en un solo archivo (movimientos, créditos, ahorro, color y fondo) para tener un respaldo o pasarlo a otro computador.</p>
+
+  <div class="dos-columnas datos">
+    <div>
+      <h3>Exportar</h3>
+      <p class="nota-chica">Crea un archivo <code>.zip</code> con todos tus datos. Guárdalo en un lugar seguro: tiene tu información financiera.</p>
+      <a class="boton" href="{{ url_for('.exportar_respaldo') }}" data-guardar="exportar_respaldo">⬇ Exportar mis datos</a>
+    </div>
+    <div>
+      <h3>Importar</h3>
+      <p class="nota-chica"><strong>Reemplaza todos tus datos actuales</strong> por los del archivo. Antes se guarda una copia automática de lo que tienes ahora.</p>
+      <form method="post" action="{{ url_for('.importar_respaldo') }}" enctype="multipart/form-data" class="formulario-linea"
+            onsubmit="return confirm('Esto reemplaza TODOS tus datos actuales por los del archivo.\n\nSe guardará una copia de seguridad de lo que tienes ahora. ¿Continuar?')">
+        <input type="file" name="archivo" accept=".zip,.db" required aria-label="Archivo de respaldo">
+        <button class="boton boton--secundario">Importar</button>
+      </form>
+    </div>
+  </div>
+  <p class="tenue nota-chica nota">Carpeta de datos: <code>{{ carpeta_datos }}</code> — ahí también quedan las copias automáticas (<code>gastos.respaldo-…db</code>).</p>
 </section>
 {% endblock %}

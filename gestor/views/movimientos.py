@@ -9,10 +9,11 @@ from ..utils import (CATEGORIAS, ErrorValidacion, mes_valido, mover_mes,
 bp = Blueprint("movimientos", __name__, url_prefix="/movimientos")
 
 
-def saldo_cuenta(conn) -> int:
+def saldo_cuenta(conn, hasta: str | None = None) -> int:
+    """Saldo de la cuenta principal (opcionalmente, al cierre de la fecha `hasta`)."""
     fila = conn.execute(
         "SELECT COALESCE(SUM(CASE WHEN tipo = 'ingreso' THEN monto ELSE -monto END), 0) "
-        "FROM movimientos"
+        "FROM movimientos WHERE fecha <= ?", (hasta or "9999-12-31",)
     ).fetchone()
     return fila[0]
 

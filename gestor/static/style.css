@@ -258,3 +258,17 @@ body.con-fondo .grilla-tarjetas--interna .tarjeta { background: color-mix(in srg
 .colores__libre input[type="color"] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
 .colores__vista { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--borde); }
 .colores__vista .progreso { flex: 1; min-width: 120px; }
+
+/* Navegación por meses en el Resumen */
+.selector-mes__flecha--off { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
+                             border: 1px solid var(--borde); color: var(--borde); font-size: 1.2rem; cursor: not-allowed; }
+.selector-mes .selector-mes__hoy { width: auto; padding: 0 12px; text-transform: none; font-size: .85rem; font-weight: 500; color: var(--primario-texto); }
+.aviso-mes { margin: -6px 0 14px; }
+body.con-fondo .selector-mes { background: color-mix(in srgb, var(--superficie) 80%, transparent);
+                               backdrop-filter: blur(10px); padding: 4px 8px; border-radius: 10px; }
+
+/* Respaldo de datos */
+.datos { margin-top: 12px; }
+.datos h3 { font-size: .95rem; margin: 0 0 6px; }
+.datos .nota-chica { margin: 0 0 12px; }
+.datos input[type="file"] { width: auto; flex: 1; min-width: 0; background: var(--superficie); }

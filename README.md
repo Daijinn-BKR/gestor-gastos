@@ -8,7 +8,7 @@ Programa de escritorio para llevar las finanzas personales, hecho con **Python, 
 | **Crédito** | Un panel con el total de tus créditos, el calendario de cuotas de los próximos 12 meses y en qué categorías usas las tarjetas. Varias tarjetas o líneas de crédito (ej. Falabella, BCI), cada una con su cupo, compras en cuotas con interés y pagos. Soporta compras internacionales en dólares con cupo propio. Calcula deuda, cupo disponible y la próxima cuota estimada. |
 | **Ahorro** | Registra depósitos y retiros, con una meta de ahorro. Los intereses se pueden sumar solos cada día o cada mes. |
 
-Además, una página de **Resumen** junta lo más importante del mes y permite **exportar todo a Excel**.
+Además, una página de **Resumen** junta lo más importante de cada mes (con flechas para revisar meses anteriores) y permite **exportar todo a Excel**.
 
 ![Resumen](docs/resumen.png)
 
@@ -28,6 +28,7 @@ Además, una página de **Resumen** junta lo más importante del mes y permite *
 
 - Montos en pesos chilenos (`$15.000`); acepta escribir `15000`, `15.000` o `$15.000`.
 - Exportación a Excel (.xlsx) con una hoja por sección, fechas y montos con formato.
+- Respaldo completo en ⚙️ Ajustes: exporta todos tus datos (incluidos color y fondo) a un `.zip` e impórtalos en otro computador. Antes de importar se guarda una copia automática de lo que tenías.
 - Navegación por mes en los movimientos; clic en Fecha, Categoría o Monto para ordenar (y otra vez para invertir). El formulario recuerda el último tipo y fecha usados.
 - Compras en hasta 48 cuotas con interés mensual opcional (cuota fija, sistema francés). Muestra cuántas cuotas van cobradas y cuánto se paga en intereses.
 - Cupo internacional en dólares por tarjeta: compras y pagos en US$ por separado de los pesos, como en el estado de cuenta del banco. Al pagar dólares puedes anotar cuántos pesos costó.
@@ -99,7 +100,7 @@ En una carpeta de tu usuario, **fuera del proyecto**, así que es imposible subi
 | macOS | `~/Library/Application Support/GestorGastos/gastos.db` |
 | Linux | `~/.local/share/GestorGastos/gastos.db` |
 
-Para respaldar tus datos, copia ese archivo. El modo demo usa `demo.db` en la misma carpeta.
+Para respaldar tus datos usa **⚙️ Ajustes → Tus datos → Exportar mis datos**, o copia ese archivo. El modo demo usa `demo.db` en la misma carpeta.
 
 Cuando una nueva versión cambia la estructura de la base de datos, la app guarda antes una copia automática (`gastos.respaldo-FECHA.db`) y luego actualiza tus datos.
 
@@ -133,6 +134,7 @@ gestor-gastos/
 │   ├── schema.sql       # tablas
 │   ├── calculos.py      # cuotas, intereses, deuda y tasas (sin base de datos)
 │   ├── exportar.py      # genera el archivo Excel
+│   ├── respaldo.py      # exportar/importar todos los datos (.zip)
 │   ├── colores.py       # color de acento y sus tonos legibles
 │   ├── utils.py         # formato de pesos, validaciones
 │   ├── seed.py          # datos ficticios
@@ -149,7 +151,6 @@ gestor-gastos/
 
 - Editar registros (hoy solo se agregan y eliminan).
 - Gráfico de evolución mensual.
-- Botón para respaldar y restaurar la base de datos.
 - Varias metas de ahorro.
 - Presupuesto por categoría con alertas.
 
