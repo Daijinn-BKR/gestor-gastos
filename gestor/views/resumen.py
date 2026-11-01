@@ -67,10 +67,12 @@ def inicio():
 
 @bp.get("/exportar")
 def exportar():
-    """Descarga directa (modo navegador). En la app de escritorio se usa main.Api."""
+    """Excel del mes que se está viendo (?mes=AAAA-MM). Descarga directa en modo navegador;
+    en la app de escritorio se usa main.Api.exportar_excel con el mismo mes."""
+    mes = _mes_pedido()
     return send_file(
-        BytesIO(generar_excel(get_db())),
+        BytesIO(generar_excel(get_db(), mes)),
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True,
-        download_name=nombre_archivo(),
+        download_name=nombre_archivo(mes),
     )

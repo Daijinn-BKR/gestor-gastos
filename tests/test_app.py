@@ -280,3 +280,26 @@ def test_resumen_limites_de_meses(client):
     assert "enero 2026" in html and 'aria-label="Mes anterior"' not in html
     assert "enero 2026" in client.get("/?mes=2025-06").get_data(as_text=True)   # antes de enero 2026 → enero
     assert 'aria-label="Mes siguiente"' not in client.get("/?mes=2099-01").get_data(as_text=True)
+
+
+def test_exportar_excel_del_mes_que_se_ve(client):
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    client.post("/movimientos/", data={"tipo": "ingreso", "fecha": "2026-09-05",
+                                       "categoria": "Sueldo", "monto": "900000"})
+    client.post("/movimientos/", data={"tipo": "egreso", "fecha": "2026-10-03",
+                                       "categoria": "Vivienda", "monto": "300000"})
+
+    html = client.get("/?mes=2026-09").get_data(as_text=True)
+    assert 'href="/exportar?mes=2026-09"' in html and "Exportar septiembre a Excel" in html
+
+    r = client.get("/exportar?mes=2026-09")
+    assert "gastos-2026-09.xlsx" in r.headers["Content-Disposition"]
+    libro = load_workbook(BytesIO(r.data))
+    assert "septiembre 2026" in libro["Resumen"]["A1"].value
+    movimientos = [f for f in libro["Movimientos"].iter_rows(min_row=2, values_only=True)]
+    assert len(movimientos) == 1 and movimientos[0][2] == "Sueldo"     # solo los de septiembre
+    resumen = {f[0]: f[1] for f in libro["Resumen"].iter_rows(min_row=3, values_only=True) if f[0]}
+    assert resumen["Saldo en cuenta"] == 900000                        # al cierre de septiembre

@@ -59,11 +59,14 @@ class Api:
         except Exception as e:
             return {"ruta": None, "error": str(e)}
 
-    def exportar_excel(self):
+    def exportar_excel(self, mes=None):
+        """Excel del mes que se está viendo en el Resumen ('AAAA-MM')."""
         from gestor.exportar import generar_excel, nombre_archivo
+        from gestor.utils import mes_valido
 
-        return self._guardar_como(nombre_archivo(), "Archivos de Excel", ".xlsx",
-                                  lambda conn, app: generar_excel(conn))
+        mes = mes_valido(mes)
+        return self._guardar_como(nombre_archivo(mes), "Archivos de Excel", ".xlsx",
+                                  lambda conn, app: generar_excel(conn, mes))
 
     def exportar_respaldo(self):
         from gestor.respaldo import generar_respaldo, nombre_archivo

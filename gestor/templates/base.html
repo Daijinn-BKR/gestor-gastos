@@ -64,7 +64,7 @@
         const metodo = boton.dataset.guardar;
         if (!api || !api[metodo]) return;
         evento.preventDefault();
-        const r = await api[metodo]();
+        const r = boton.dataset.argumento ? await api[metodo](boton.dataset.argumento) : await api[metodo]();
         if (!r || r.cancelado) return;
         const aviso = document.createElement('div');
         aviso.className = 'alerta alerta--' + (r.ok ? 'ok' : 'error');

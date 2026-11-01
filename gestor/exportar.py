@@ -1,4 +1,5 @@
-"""Exporta todos los datos a un archivo Excel (.xlsx)."""
+"""Exporta a Excel (.xlsx) el resumen y los registros de un mes."""
+import calendar
 from datetime import date
 from io import BytesIO
 
@@ -50,26 +51,36 @@ def _fecha(texto):
     return date.fromisoformat(texto)
 
 
-def generar_excel(conn, hoy: date | None = None) -> bytes:
+def generar_excel(conn, mes: str | None = None, hoy: date | None = None) -> bytes:
+    """Excel del mes 'AAAA-MM' (por defecto, el actual), igual a lo que muestra el Resumen.
+
+    Los saldos, la deuda y el ahorro son los del cierre del mes (o los de hoy si es el mes
+    actual). Las hojas de detalle traen solo los registros de ese mes."""
     # Importes diferidos para evitar importaciones circulares
     from .views.ahorro import estado_ahorro
     from .views.credito import listar_cuentas, resumen_general
     from .views.movimientos import saldo_cuenta, totales_mes
 
     hoy = hoy or date.today()
-    mes = hoy.strftime("%Y-%m")
+    mes = mes or hoy.strftime("%Y-%m")
+    es_actual = mes == hoy.strftime("%Y-%m")
+    anio, num = map(int, mes.split("-"))
+    cierre = hoy if es_actual else date(anio, num, calendar.monthrange(anio, num)[1])
+    hasta = None if es_actual else cierre.isoformat()
+
     libro = Workbook()
     libro.remove(libro.active)
 
     # ── Resumen ──────────────────────────────────────────────────────────
     totales = totales_mes(conn, mes)
-    credito = resumen_general(conn, hoy)
-    ahorro = estado_ahorro(conn)
+    credito = resumen_general(conn, cierre, hasta)
+    ahorro = estado_ahorro(conn, hasta)
 
     hoja = libro.create_sheet("Resumen")
-    hoja["A1"] = "Gestor de gastos"
+    hoja["A1"] = f"Gestor de gastos · {nombre_mes(mes)}"
     hoja["A1"].font = Font(bold=True, size=16)
-    hoja["A2"] = f"Exportado el {hoy:%d-%m-%Y}"
+    hoja["A2"] = (f"Exportado el {hoy:%d-%m-%Y}" if es_actual
+                  else f"Saldos al cierre del {cierre:%d-%m-%Y} · exportado el {hoy:%d-%m-%Y}")
     hoja["A2"].font = Font(italic=True, color="6B7385")
 
     def seccion(titulo):
@@ -85,7 +96,7 @@ def generar_excel(conn, hoy: date | None = None) -> bytes:
         hoja.cell(hoja.max_row, 2).number_format = formato
 
     seccion(f"Cuenta principal · {nombre_mes(mes)}")
-    dato("Saldo en cuenta", saldo_cuenta(conn))
+    dato("Saldo en cuenta", saldo_cuenta(conn, hasta))
     dato("Ingresos del mes", totales["ingresos"])
     dato("Egresos del mes", totales["egresos"])
     dato("Balance del mes", totales["balance"])
@@ -125,7 +136,8 @@ def generar_excel(conn, hoy: date | None = None) -> bytes:
     filas = [
         (_fecha(m["fecha"]), m["tipo"].capitalize(), m["categoria"], m["descripcion"],
          m["monto"] if m["tipo"] == "ingreso" else -m["monto"])
-        for m in conn.execute("SELECT * FROM movimientos ORDER BY fecha, id")
+        for m in conn.execute("SELECT * FROM movimientos WHERE substr(fecha, 1, 7) = ? "
+                              "ORDER BY fecha, id", (mes,))
     ]
     _hoja(libro, "Movimientos", ["Fecha", "Tipo", "Categoría", "Descripción", "Monto"], filas,
           {1: FECHA, 5: PESOS}, [13, 10, 20, 34, 14])
@@ -133,8 +145,9 @@ def generar_excel(conn, hoy: date | None = None) -> bytes:
     # ── Crédito ──────────────────────────────────────────────────────────
     nombres = {c["id"]: c["nombre"] for c in listar_cuentas(conn)}
     filas, monedas = [], []
-    for c in conn.execute("SELECT * FROM credito_compras ORDER BY cuenta_id, moneda, fecha, id"):
-        e = estado_cuotas(c["monto"], c["cuotas"], _fecha(c["fecha"]), hoy, c["interes"])
+    for c in conn.execute("SELECT * FROM credito_compras WHERE substr(fecha, 1, 7) = ? "
+                          "ORDER BY cuenta_id, moneda, fecha, id", (mes,)):
+        e = estado_cuotas(c["monto"], c["cuotas"], _fecha(c["fecha"]), cierre, c["interes"])
         div = 100 if c["moneda"] == "USD" else 1  # dólares se guardan en centavos
         filas.append((nombres.get(c["cuenta_id"], ""), _fecha(c["fecha"]), c["moneda"], c["categoria"],
                       c["descripcion"], c["monto"] / div, c["cuotas"], c["interes"],
@@ -147,7 +160,8 @@ def generar_excel(conn, hoy: date | None = None) -> bytes:
     _formato_moneda(hoja, monedas, columnas=(6, 9, 10))
 
     filas, monedas = [], []
-    for p in conn.execute("SELECT * FROM credito_pagos ORDER BY cuenta_id, fecha, id"):
+    for p in conn.execute("SELECT * FROM credito_pagos WHERE substr(fecha, 1, 7) = ? "
+                          "ORDER BY cuenta_id, fecha, id", (mes,)):
         div = 100 if p["moneda"] == "USD" else 1
         filas.append((nombres.get(p["cuenta_id"], ""), _fecha(p["fecha"]), p["moneda"], p["descripcion"],
                       p["monto"] / div, p["monto_clp"]))
@@ -160,7 +174,8 @@ def generar_excel(conn, hoy: date | None = None) -> bytes:
     filas = [
         (_fecha(a["fecha"]), "Depósito" if a["tipo"] == "deposito" else "Retiro", a["descripcion"],
          a["monto"] if a["tipo"] == "deposito" else -a["monto"])
-        for a in conn.execute("SELECT * FROM ahorro ORDER BY fecha, id")
+        for a in conn.execute("SELECT * FROM ahorro WHERE substr(fecha, 1, 7) = ? "
+                              "ORDER BY fecha, id", (mes,))
     ]
     _hoja(libro, "Ahorro", ["Fecha", "Tipo", "Descripción", "Monto"], filas,
           {1: FECHA, 4: PESOS}, [13, 11, 30, 14])
@@ -170,5 +185,6 @@ def generar_excel(conn, hoy: date | None = None) -> bytes:
     return salida.getvalue()
 
 
-def nombre_archivo(hoy: date | None = None) -> str:
-    return f"gastos-{(hoy or date.today()).isoformat()}.xlsx"
+def nombre_archivo(mes: str | None = None) -> str:
+    """'gastos-2026-10.xlsx'"""
+    return f"gastos-{mes or date.today().strftime('%Y-%m')}.xlsx"
