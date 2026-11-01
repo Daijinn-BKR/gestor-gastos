@@ -45,3 +45,42 @@ def test_rechaza_archivos_que_no_son_imagen(app, client):
     r = subir(client, b"MZ\x90\x00 esto es un programa", "foto.png")
     assert "no es una imagen válida" in r.get_data(as_text=True)
     assert not list(Path(app.config["DATABASE"]).parent.glob("fondo.*"))
+
+
+def test_color_de_acento(client):
+    html = client.get("/").get_data(as_text=True)
+    assert "--primario: #F2A5EA" in html                     # rosado por defecto
+
+    client.post("/ajustes/color", data={"color": "#2f6fed"})
+    html = client.get("/movimientos/").get_data(as_text=True)
+    assert "--primario: #2F6FED" in html                     # se aplica en todas las páginas
+    assert "Volver al color original" in client.get("/ajustes/").get_data(as_text=True)
+
+    client.post("/ajustes/color/restablecer")
+    assert "--primario: #F2A5EA" in client.get("/").get_data(as_text=True)
+
+
+def test_color_invalido_no_se_guarda(client):
+    r = client.post("/ajustes/color", data={"color": "red;}</style><script>alert(1)</script>"},
+                    follow_redirects=True)
+    html = r.get_data(as_text=True)
+    assert "Color no válido" in html
+    assert "<script>alert(1)" not in html
+    assert "--primario: #F2A5EA" in html
+
+
+def test_paleta_siempre_legible():
+    from gestor.colores import FONDO_CLARO, SUPERFICIE_OSCURA, contraste, paleta
+    for color in ["#F2A5EA", "#FFFF00", "#FFFFFF", "#000000", "#2F6FED", "#00FF00", "#777777"]:
+        p = paleta(color)
+        assert contraste(p["texto_claro"], FONDO_CLARO) >= 4.5, color
+        assert contraste(p["texto_oscuro"], SUPERFICIE_OSCURA) >= 4.5, color
+        assert contraste(p["primario"], p["sobre_primario"]) >= 3, color
+
+
+def test_graficos_no_repiten_el_color_elegido():
+    from gestor.colores import PREDEFINIDOS, series
+    for color, _ in PREDEFINIDOS:
+        otros = [claro for claro, _ in series(color)]
+        assert len(otros) == 5 and color not in otros
+    assert "#1F9D55" not in [c for c, _ in series("#1F9D55")]   # verde elegido → sin verde en el resto

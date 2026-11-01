@@ -246,3 +246,15 @@ body.con-fondo .grilla-tarjetas--interna .tarjeta { background: color-mix(in srg
 .difuminado input[type="range"] { width: 200px; padding: 0; accent-color: var(--primario-texto); }
 .boton--angosto { width: auto; }
 @media (max-width: 640px) { .ajustes-fondo { grid-template-columns: 1fr; } }
+
+/* Selector de color de acento */
+.colores { display: grid; gap: 14px; margin-top: 12px; }
+.colores__muestras { display: flex; flex-wrap: wrap; gap: 10px; }
+.colores__muestra { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--superficie);
+                    background: var(--muestra); cursor: pointer; box-shadow: 0 0 0 1px var(--borde); padding: 0; }
+.colores__muestra:hover { transform: scale(1.08); }
+.colores__muestra.activo { box-shadow: 0 0 0 3px var(--primario-texto); }
+.colores__libre { align-items: center; flex-wrap: wrap; }
+.colores__libre input[type="color"] { width: 48px; height: 36px; padding: 2px; cursor: pointer; }
+.colores__vista { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--borde); }
+.colores__vista .progreso { flex: 1; min-width: 120px; }

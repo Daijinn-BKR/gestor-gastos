@@ -7,7 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask
 
-from . import db
+from . import colores, db
 from .rutas import carpeta_datos
 from .utils import clp, fecha_corta, nombre_mes, pct, usd
 
@@ -52,7 +52,8 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.context_processor
     def variables_globales():
-        return {"hoy": date.today().isoformat(), "fondo": ajustes.info_fondo()}
+        return {"hoy": date.today().isoformat(), "fondo": ajustes.info_fondo(),
+                "css_acento": colores.css(ajustes.color_acento())}
 
     for modulo in (resumen, movimientos, credito, ahorro, ajustes):
         app.register_blueprint(modulo.bp)

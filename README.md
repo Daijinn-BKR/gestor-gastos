@@ -35,11 +35,15 @@ Además, una página de **Resumen** junta lo más importante del mes y permite *
 - Pagos de tarjeta y depósitos de ahorro pueden reflejarse automáticamente como movimientos de la cuenta; si los borras, el movimiento vinculado también se borra.
 - Validaciones: no deja pagar más que la deuda ni retirar más de lo ahorrado.
 - Funciona sin internet; los datos nunca salen de tu computador.
-- Fondo de pantalla personalizado con difuminado ajustable (en ⚙️ Ajustes). La imagen se guarda junto a tus datos, fuera del proyecto.
+- Personalización en ⚙️ Ajustes: color de botones y barras (8 colores listos o cualquier otro; los tonos del texto se ajustan solos para que siempre se lea bien) y fondo de pantalla con difuminado ajustable. La imagen se guarda junto a tus datos, fuera del proyecto.
 - Modo oscuro automático. Los gráficos se dibujan con HTML y CSS, sin librerías externas.
-- Tests con `pytest` y GitHub Actions.
+- Tests con `pytest` y GitHub Actions; cada versión nueva genera y publica el `.exe` automáticamente.
 
-## Instalación
+## Descargar
+
+La forma más fácil: baja **GestorGastos.exe** desde la [última versión](https://github.com/Daijinn-BKR/gestor-gastos/releases/latest) y ábrelo con doble clic (Windows 10/11). No necesitas instalar Python.
+
+## Instalación (desde el código)
 
 Requiere Python 3.10 o superior. En Windows 10/11 no necesitas nada más (usa Microsoft Edge WebView2, que viene incluido).
 
@@ -73,6 +77,17 @@ python build.py
 El programa queda en `dist/GestorGastos.exe`. Puedes moverlo a donde quieras o crear un acceso directo en el escritorio. El ejecutable se genera para el sistema donde corres el script (en Windows sale un `.exe`).
 
 > En la primera ejecución, Windows SmartScreen puede mostrar un aviso porque el programa no está firmado. Haz clic en *Más información → Ejecutar de todas formas*.
+
+### Publicar una nueva versión
+
+GitHub Actions genera el `.exe` solo. Basta con crear un tag que empiece con `v` y subirlo:
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+El workflow `.github/workflows/release.yml` corre los tests en Windows, construye `GestorGastos.exe` y lo publica en Releases. Si algún test falla, no se publica nada.
 
 ## ¿Dónde se guardan mis datos?
 
@@ -110,6 +125,7 @@ Cada test usa una base temporal, así que no afecta tus datos.
 gestor-gastos/
 ├── main.py              # abre la app en una ventana de escritorio
 ├── build.py             # genera el ejecutable con PyInstaller
+├── .github/workflows/   # tests en cada push y .exe automático en cada versión
 ├── gestor/
 │   ├── __init__.py      # crea la app Flask
 │   ├── rutas.py         # carpeta de datos según el sistema operativo
@@ -117,6 +133,7 @@ gestor-gastos/
 │   ├── schema.sql       # tablas
 │   ├── calculos.py      # cuotas, intereses, deuda y tasas (sin base de datos)
 │   ├── exportar.py      # genera el archivo Excel
+│   ├── colores.py       # color de acento y sus tonos legibles
 │   ├── utils.py         # formato de pesos, validaciones
 │   ├── seed.py          # datos ficticios
 │   ├── views/           # una ruta por sección

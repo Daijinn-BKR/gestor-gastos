@@ -1,0 +1,40 @@
+# Genera GestorGastos.exe y lo publica en Releases cada vez que subes un tag v*
+# Uso:  git tag v1.1.0  y luego  git push origin v1.1.0
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # necesario para crear el Release y adjuntar el .exe
+
+jobs:
+  exe-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Correr tests
+        run: pytest -q
+
+      - name: Generar el ejecutable
+        run: python build.py
+
+      - name: Publicar el Release con el .exe
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/GestorGastos.exe
+          generate_release_notes: true
+          body: |
+            Descarga **GestorGastos.exe** y ábrelo con doble clic (Windows 10/11). No necesitas instalar Python.
+
+            Si Windows SmartScreen muestra un aviso, haz clic en *Más información → Ejecutar de todas formas*.

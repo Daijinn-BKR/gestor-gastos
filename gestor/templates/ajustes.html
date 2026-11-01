@@ -4,6 +4,42 @@
 <h1>Ajustes</h1>
 
 <section class="panel">
+  <h2>Color de botones y barras</h2>
+  <p class="tenue nota-chica">Elige un color. La app ajusta sola los tonos del texto para que se lea bien en modo claro y oscuro.</p>
+
+  <div class="colores">
+    <form method="post" action="{{ url_for('.cambiar_color') }}" class="colores__muestras" aria-label="Colores predefinidos">
+      {% for valor, nombre in predefinidos %}
+        <button type="submit" name="color" value="{{ valor }}" title="{{ nombre }}" aria-label="{{ nombre }}"
+                class="colores__muestra {{ 'activo' if valor == color }}" style="--muestra: {{ valor }}"
+                aria-pressed="{{ 'true' if valor == color else 'false' }}"></button>
+      {% endfor %}
+    </form>
+    <form method="post" action="{{ url_for('.cambiar_color') }}" class="formulario-linea colores__libre">
+      <label for="color-libre">Otro color:</label>
+      <input type="color" id="color-libre" name="color" value="{{ color }}"
+             oninput="document.getElementById('codigo-color').textContent = this.value.toUpperCase();
+                      document.documentElement.style.setProperty('--primario', this.value);
+                      document.documentElement.style.setProperty('--serie-0', this.value);">
+      <code id="codigo-color">{{ color }}</code>
+      <button type="submit" class="boton boton--secundario">Guardar este color</button>
+    </form>
+  </div>
+  {% if color != color_por_defecto %}
+    <form method="post" action="{{ url_for('.restablecer_color') }}" class="nota">
+      <button class="boton boton--secundario">Volver al color original</button>
+    </form>
+  {% endif %}
+
+  <div class="colores__vista" aria-hidden="true">
+    <span class="tenue nota-chica">Vista previa:</span>
+    <span class="boton">Botón</span>
+    <span class="boton boton--secundario">Secundario</span>
+    <div class="progreso"><div class="progreso__relleno" style="width: 60%"></div></div>
+  </div>
+</section>
+
+<section class="panel">
   <h2>Fondo de pantalla</h2>
   <p class="tenue nota-chica">La imagen se guarda solo en este computador, junto a tus datos. No forma parte del proyecto, así que nunca se sube a GitHub.</p>
 

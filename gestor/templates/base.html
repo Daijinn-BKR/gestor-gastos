@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}Gestor de gastos{% endblock %} · Gestor de gastos</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {# Color de acento elegido en Ajustes (generado solo a partir de un color #RRGGBB validado) #}
+  <style id="color-acento">{{ css_acento | safe }}</style>
 </head>
 <body class="{{ 'con-fondo' if fondo }}">
   {% if fondo %}

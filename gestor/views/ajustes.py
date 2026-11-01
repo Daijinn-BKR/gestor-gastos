@@ -1,4 +1,4 @@
-"""Ajustes: fondo de pantalla personalizado.
+"""Ajustes: fondo de pantalla y color de acento.
 
 La imagen se guarda en la carpeta de datos del usuario (junto a gastos.db), nunca
 dentro del proyecto: así una imagen personal no termina subida a GitHub."""
@@ -7,7 +7,8 @@ from pathlib import Path
 from flask import (Blueprint, abort, current_app, flash, redirect,
                    render_template, request, send_file, url_for)
 
-from ..db import get_config, set_config
+from .. import colores
+from ..db import get_config, get_config_texto, set_config
 
 bp = Blueprint("ajustes", __name__, url_prefix="/ajustes")
 
@@ -54,10 +55,35 @@ def _formato(datos: bytes) -> str | None:
     return None
 
 
+def color_acento() -> str:
+    color = get_config_texto("color_acento", colores.COLOR_POR_DEFECTO)
+    return color.upper() if colores.es_color(color) else colores.COLOR_POR_DEFECTO
+
+
 @bp.get("/")
 def inicio():
     return render_template("ajustes.html", fondo=info_fondo(),
-                           difuminado=get_config("fondo_difuminado", DIFUMINADO_POR_DEFECTO))
+                           difuminado=get_config("fondo_difuminado", DIFUMINADO_POR_DEFECTO),
+                           color=color_acento(), predefinidos=colores.PREDEFINIDOS,
+                           color_por_defecto=colores.COLOR_POR_DEFECTO)
+
+
+@bp.post("/color")
+def cambiar_color():
+    color = (request.form.get("color") or "").strip()
+    if not colores.es_color(color):
+        flash("Color no válido.", "error")
+        return redirect(url_for(".inicio"))
+    set_config("color_acento", color.upper())
+    flash("Color actualizado.", "ok")
+    return redirect(url_for(".inicio"))
+
+
+@bp.post("/color/restablecer")
+def restablecer_color():
+    set_config("color_acento", colores.COLOR_POR_DEFECTO)
+    flash("Color restablecido.", "ok")
+    return redirect(url_for(".inicio"))
 
 
 @bp.get("/fondo")
