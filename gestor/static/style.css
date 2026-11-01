@@ -272,3 +272,15 @@ body.con-fondo .selector-mes { background: color-mix(in srgb, var(--superficie) 
 .datos h3 { font-size: .95rem; margin: 0 0 6px; }
 .datos .nota-chica { margin: 0 0 12px; }
 .datos input[type="file"] { width: auto; flex: 1; min-width: 0; background: var(--superficie); }
+
+/* Sincronizar entre computadores */
+.carpeta input[name="carpeta"] { flex: 1; min-width: 0; width: auto; }
+.decision { border: 1px solid var(--primario-texto); border-radius: var(--radio); padding: 14px; margin-top: 12px; }
+.decision p { margin: 0 0 12px; }
+.decision__opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.decision__opciones .nota-chica { margin: 6px 0 0; }
+.enlace-boton { background: none; border: 0; padding: 0; margin-top: 10px; color: var(--primario-texto); text-decoration: underline; cursor: pointer; font: inherit; font-size: .9rem; }
+.ayuda summary { cursor: pointer; color: var(--primario-texto); font-size: .9rem; }
+.ayuda ol { padding-left: 20px; margin: 10px 0; font-size: .9rem; }
+.ayuda li { margin-bottom: 6px; }
+.ayuda p { font-size: .9rem; margin: 0; }

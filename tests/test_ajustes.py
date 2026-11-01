@@ -84,3 +84,9 @@ def test_graficos_no_repiten_el_color_elegido():
         otros = [claro for claro, _ in series(color)]
         assert len(otros) == 5 and color not in otros
     assert "#1F9D55" not in [c for c, _ in series("#1F9D55")]   # verde elegido → sin verde en el resto
+
+
+def test_titulo_de_ajustes(client):
+    html = client.get("/ajustes/").get_data(as_text=True)
+    assert "<title>Ajustes · Gestor de gastos</title>" in html
+    assert html.count('id="datos"') == 1

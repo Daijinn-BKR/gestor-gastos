@@ -28,6 +28,7 @@ Además, una página de **Resumen** junta lo más importante de cada mes (con fl
 
 - Montos en pesos chilenos (`$15.000`); acepta escribir `15000`, `15.000` o `$15.000`.
 - Exportación a Excel (.xlsx) con una hoja por sección, fechas y montos con formato.
+- Sincronización entre computadores: elige en ⚙️ Ajustes una carpeta de OneDrive o Google Drive y la app guarda ahí tus datos. Avisa si la app está abierta en otro computador y si la nube creó copias en conflicto.
 - Respaldo completo en ⚙️ Ajustes: exporta todos tus datos (incluidos color y fondo) a un `.zip` e impórtalos en otro computador. Antes de importar se guarda una copia automática de lo que tenías.
 - Navegación por mes en los movimientos; clic en Fecha, Categoría o Monto para ordenar (y otra vez para invertir). El formulario recuerda el último tipo y fecha usados.
 - Compras en hasta 48 cuotas con interés mensual opcional (cuota fija, sistema francés). Muestra cuántas cuotas van cobradas y cuánto se paga en intereses.
@@ -102,6 +103,12 @@ En una carpeta de tu usuario, **fuera del proyecto**, así que es imposible subi
 
 Para respaldar tus datos usa **⚙️ Ajustes → Tus datos → Exportar mis datos**, o copia ese archivo. El modo demo usa `demo.db` en la misma carpeta.
 
+### Usar la app en varios computadores
+
+En **⚙️ Ajustes → Sincronizar entre computadores** puedes elegir una carpeta de OneDrive o Google Drive. La app copia ahí tus datos y desde entonces los guarda en esa carpeta. En el otro computador eliges la misma carpeta y presionas *Usar los datos de esa carpeta*. La ubicación elegida se recuerda en `ubicacion.json`, dentro de la carpeta de datos de cada computador.
+
+Usa la app en un solo computador a la vez: SQLite no está pensado para que dos equipos escriban el mismo archivo al mismo tiempo, y la nube crearía copias en conflicto.
+
 Cuando una nueva versión cambia la estructura de la base de datos, la app guarda antes una copia automática (`gastos.respaldo-FECHA.db`) y luego actualiza tus datos.
 
 ### Modo desarrollo
@@ -135,6 +142,7 @@ gestor-gastos/
 │   ├── calculos.py      # cuotas, intereses, deuda y tasas (sin base de datos)
 │   ├── exportar.py      # genera el archivo Excel
 │   ├── respaldo.py      # exportar/importar todos los datos (.zip)
+│   ├── ubicacion.py     # carpeta de datos elegida y avisos de sincronización
 │   ├── colores.py       # color de acento y sus tonos legibles
 │   ├── utils.py         # formato de pesos, validaciones
 │   ├── seed.py          # datos ficticios

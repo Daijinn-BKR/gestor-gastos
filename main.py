@@ -46,6 +46,19 @@ class Api:
         except Exception as e:  # se muestra en la ventana en vez de fallar en silencio
             return {"ok": False, "error": str(e)}
 
+    def elegir_carpeta(self):
+        """Selector de carpetas de Windows (para la carpeta de datos sincronizada)."""
+        import webview
+
+        try:
+            dialogo = getattr(getattr(webview, "FileDialog", None), "FOLDER", None) or webview.FOLDER_DIALOG
+            ruta = self._ventana.create_file_dialog(dialogo)
+            if not ruta:
+                return {"ruta": None}
+            return {"ruta": str(ruta[0] if isinstance(ruta, (list, tuple)) else ruta)}
+        except Exception as e:
+            return {"ruta": None, "error": str(e)}
+
     def exportar_excel(self):
         from gestor.exportar import generar_excel, nombre_archivo
 
@@ -92,6 +105,10 @@ def main():
     api._ventana = webview.create_window(titulo, app, js_api=api,
                                          width=1200, height=860, min_size=(820, 600))
     webview.start()
+
+    # Al cerrar la ventana: quitar la marca de "app abierta en este computador"
+    from gestor import ubicacion
+    ubicacion.liberar(Path(app.config["DATABASE"]).parent)
 
 
 if __name__ == "__main__":

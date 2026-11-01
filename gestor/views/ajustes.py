@@ -2,14 +2,17 @@
 
 La imagen se guarda en la carpeta de datos del usuario (junto a gastos.db), nunca
 dentro del proyecto: así una imagen personal no termina subida a GitHub."""
+import shutil
+import sqlite3
 from io import BytesIO
 from pathlib import Path
 
 from flask import (Blueprint, abort, current_app, flash, redirect,
-                   render_template, request, send_file, url_for)
+                   render_template, request, send_file, session, url_for)
 
-from .. import colores, respaldo
-from ..db import get_config, get_config_texto, get_db, set_config
+from .. import colores, respaldo, ubicacion
+from ..db import (close_db, conectar, get_config, get_config_texto, get_db,
+                  init_db, respaldar, set_config)
 
 bp = Blueprint("ajustes", __name__, url_prefix="/ajustes")
 
@@ -67,7 +70,114 @@ def inicio():
                            difuminado=get_config("fondo_difuminado", DIFUMINADO_POR_DEFECTO),
                            color=color_acento(), predefinidos=colores.PREDEFINIDOS,
                            color_por_defecto=colores.COLOR_POR_DEFECTO,
-                           carpeta_datos=str(_carpeta()))
+                           carpeta_datos=str(_carpeta()),
+                           carpeta_por_defecto=current_app.config["CARPETA_POR_DEFECTO"],
+                           carpeta_personalizada=_carpeta() != Path(current_app.config["CARPETA_POR_DEFECTO"]),
+                           carpeta_pendiente=session.get("carpeta_pendiente"),
+                           equipo=ubicacion.nombre_equipo())
+
+
+# ── Carpeta de datos (para sincronizar con OneDrive, Google Drive…) ─────
+
+def _copiar_fondo(origen: Path, destino: Path, reemplazar: bool):
+    fondos = [origen / f"fondo.{ext}" for ext in FIRMAS if (origen / f"fondo.{ext}").exists()]
+    if not fondos:
+        return
+    existentes = [destino / f"fondo.{ext}" for ext in FIRMAS if (destino / f"fondo.{ext}").exists()]
+    if existentes and not reemplazar:
+        return
+    for archivo in existentes:
+        archivo.unlink()
+    shutil.copy2(fondos[0], destino / fondos[0].name)
+
+
+def _copiar_base(destino_db: Path):
+    """Copia la base actual a destino_db de forma segura aunque esté abierta."""
+    copia = sqlite3.connect(destino_db)
+    try:
+        get_db().backup(copia)
+    finally:
+        copia.close()
+
+
+@bp.post("/carpeta")
+def cambiar_carpeta():
+    texto = (request.form.get("carpeta") or "").strip().strip('"')
+    accion = request.form.get("accion")          # None, "usar" o "reemplazar"
+    volver = redirect(url_for(".inicio") + "#sincronizar")
+    if not texto:
+        flash("Escribe o elige una carpeta.", "error")
+        return volver
+    destino = Path(texto).expanduser()
+    if not destino.is_absolute():
+        flash("Escribe la ruta completa de la carpeta, por ejemplo C:\\Users\\tu-usuario\\OneDrive\\GestorGastos.", "error")
+        return volver
+    if not destino.is_dir():
+        flash(f"La carpeta {destino} no existe. Créala primero (por ejemplo dentro de OneDrive).", "error")
+        return volver
+    if not ubicacion.es_escribible(destino):
+        flash("No se puede guardar en esa carpeta (sin permiso de escritura).", "error")
+        return volver
+
+    origen = _carpeta()
+    nueva_db = destino / ubicacion.NOMBRE_DB
+    if destino.resolve() == origen.resolve():
+        session.pop("carpeta_pendiente", None)
+        flash("Tus datos ya están en esa carpeta.", "ok")
+        return volver
+
+    if nueva_db.exists() and accion not in ("usar", "reemplazar"):
+        # La carpeta ya tiene datos (ej. de otro computador): el usuario decide qué hacer.
+        session["carpeta_pendiente"] = str(destino)
+        return volver
+
+    if nueva_db.exists() and accion == "usar":
+        try:
+            respaldo._validar_base(nueva_db)
+        except respaldo.ErrorRespaldo as e:
+            flash(f"No se pueden usar los datos de esa carpeta: {e}", "error")
+            return volver
+        _copiar_fondo(origen, destino, reemplazar=False)
+        mensaje = "Listo: ahora usas los datos de esa carpeta."
+    else:
+        if nueva_db.exists():                     # reemplazar: antes se guarda una copia
+            existente = conectar(str(nueva_db))
+            try:
+                respaldar(existente)
+            finally:
+                existente.close()
+        _copiar_base(nueva_db)
+        _copiar_fondo(origen, destino, reemplazar=True)
+        mensaje = "Listo: tus datos se copiaron a la nueva carpeta y desde ahora se guardan ahí."
+
+    # Cambiar a la nueva carpeta
+    ubicacion.liberar(origen)
+    close_db()
+    conn = conectar(str(nueva_db))
+    try:
+        init_db(conn)                             # actualiza bases de versiones antiguas
+    finally:
+        conn.close()
+    por_defecto = Path(current_app.config["CARPETA_POR_DEFECTO"])
+    ubicacion.guardar_ubicacion(Path(current_app.config["ARCHIVO_UBICACION"]),
+                                None if destino.resolve() == por_defecto.resolve() else destino)
+    current_app.config.update(DATABASE=str(nueva_db), AVISO_CARPETA=None)
+    ubicacion.latido(destino, forzar=True)
+    session.pop("carpeta_pendiente", None)
+    flash(mensaje + f" (La copia anterior sigue en {origen}.)", "ok")
+    return volver
+
+
+@bp.post("/carpeta/cancelar")
+def cancelar_carpeta():
+    session.pop("carpeta_pendiente", None)
+    return redirect(url_for(".inicio") + "#sincronizar")
+
+
+@bp.post("/latido")
+def latido():
+    """La página llama aquí cada minuto para avisar que la app sigue abierta."""
+    return "", 204
 
 
 # ── Respaldo: exportar e importar todos los datos ───────────────────────

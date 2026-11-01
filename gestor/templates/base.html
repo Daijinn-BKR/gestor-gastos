@@ -38,11 +38,24 @@
         <div class="alerta alerta--{{ tipo }}">{{ texto }}</div>
       {% endfor %}
     {% endwith %}
+    {% if aviso_carpeta %}<div class="alerta alerta--error">⚠ {{ aviso_carpeta }}</div>{% endif %}
+    {% if otro_equipo %}
+      <div class="alerta alerta--aviso">⚠ La app parece estar abierta en <strong>{{ otro_equipo }}</strong>.
+        Ciérrala allí antes de hacer cambios aquí, para que OneDrive no cree copias en conflicto.</div>
+    {% endif %}
+    {% if copias_conflicto %}
+      <div class="alerta alerta--aviso">⚠ Se encontraron copias en conflicto de tus datos ({{ copias_conflicto | join(', ') }}).
+        Pasa cuando dos computadores guardan a la vez. Tus datos actuales están bien; si te falta algo, importa esa copia desde
+        <a href="{{ url_for('ajustes.inicio') }}#datos">Ajustes → Tus datos</a>.</div>
+    {% endif %}
     <div id="avisos"></div>
     {% block contenido %}{% endblock %}
   </main>
 
   <script>
+    // Avisa cada minuto que la app sigue abierta (para el aviso de "abierta en otro computador").
+    setInterval(() => fetch("{{ url_for('ajustes.latido') }}", { method: 'POST' }).catch(() => {}), 60000);
+
     // Botones con data-guardar="metodo": en la app de escritorio abren el diálogo
     // "Guardar como" (main.Api). En el navegador el enlace descarga el archivo normalmente.
     document.querySelectorAll('[data-guardar]').forEach((boton) => {
@@ -61,6 +74,9 @@
     });
   </script>
 
-  <footer class="pie contenedor">Tus datos se guardan solo en este computador.</footer>
+  <footer class="pie contenedor">
+    {% if carpeta_sincronizada %}Tus datos se guardan en la carpeta que elegiste en Ajustes. Usa la app en un solo computador a la vez.
+    {% else %}Tus datos se guardan solo en este computador.{% endif %}
+  </footer>
 </body>
 </html>
