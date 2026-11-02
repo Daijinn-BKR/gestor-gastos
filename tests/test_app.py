@@ -293,7 +293,7 @@ def test_exportar_excel_del_mes_que_se_ve(client):
                                        "categoria": "Vivienda", "monto": "300000"})
 
     html = client.get("/?mes=2026-09").get_data(as_text=True)
-    assert 'href="/exportar?mes=2026-09"' in html and "Exportar septiembre a Excel" in html
+    assert 'href="/exportar?mes=2026-09"' in html and "Exportar Septiembre a Excel" in html
 
     r = client.get("/exportar?mes=2026-09")
     assert "gastos-2026-09.xlsx" in r.headers["Content-Disposition"]

@@ -129,5 +129,7 @@ def css(color: str) -> str:
     otros = series(color)
     claro += " " + " ".join(f"--serie-{i}: {c};" for i, (c, _) in enumerate(otros, start=1))
     oscuro += " " + " ".join(f"--serie-{i}: {c};" for i, (_, c) in enumerate(otros, start=1))
+    # Modo oscuro: forzado en Ajustes (data-tema="oscuro") o automático según Windows
     return (f":root {{ {claro} }}\n"
-            f"@media (prefers-color-scheme: dark) {{ :root {{ {oscuro} }} }}")
+            f':root[data-tema="oscuro"] {{ {oscuro} }}\n'
+            f'@media (prefers-color-scheme: dark) {{ :root:not([data-tema="claro"]) {{ {oscuro} }} }}')

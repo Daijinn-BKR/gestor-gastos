@@ -22,7 +22,7 @@
   </nav>
   <a class="boton" id="exportar" href="{{ url_for('resumen.exportar', mes=mes) }}"
      data-guardar="exportar_excel" data-argumento="{{ mes }}"
-     title="Exporta el resumen y los registros de {{ mes | nombre_mes }}">⬇ Exportar {{ (mes | nombre_mes).split(' ')[0] }} a Excel</a>
+     title="Exporta el resumen y los registros de {{ mes | nombre_mes }}">⬇ Exportar {{ (mes | nombre_mes).split(' ')[0] | capitalize }} a Excel</a>
 </div>
 {% if not es_actual %}
   <p class="tenue nota-chica aviso-mes">Saldos, deuda y ahorro al cierre de {{ mes | nombre_mes }}.</p>

@@ -38,7 +38,7 @@ Además, una página de **Resumen** junta lo más importante de cada mes (con fl
 - Validaciones: no deja pagar más que la deuda ni retirar más de lo ahorrado.
 - Funciona sin internet; los datos nunca salen de tu computador.
 - Personalización en ⚙️ Ajustes: color de botones y barras (8 colores listos o cualquier otro; los tonos del texto se ajustan solos para que siempre se lea bien) y fondo de pantalla con difuminado ajustable. La imagen se guarda junto a tus datos, fuera del proyecto.
-- Modo oscuro automático. Los gráficos se dibujan con HTML y CSS, sin librerías externas.
+- Tema claro, oscuro o automático (sigue a Windows), a elección en ⚙️ Ajustes. Los gráficos se dibujan con HTML y CSS, sin librerías externas.
 - Tests con `pytest` y GitHub Actions; cada versión nueva genera y publica el `.exe` automáticamente.
 
 ## Descargar

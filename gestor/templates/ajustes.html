@@ -4,6 +4,19 @@
 <h1>Ajustes</h1>
 
 <section class="panel">
+  <h2>Tema</h2>
+  <p class="tenue nota-chica">Automático usa el mismo modo que Windows (claro u oscuro).</p>
+  <form method="post" action="{{ url_for('.cambiar_tema') }}" class="selector-tema" aria-label="Tema">
+    {% for valor, nombre in temas.items() %}
+      <button type="submit" name="tema" value="{{ valor }}" class="selector-tema__opcion {{ 'activo' if tema == valor }}"
+              aria-pressed="{{ 'true' if tema == valor else 'false' }}">
+        {{ {'auto': '🖥️', 'claro': '☀️', 'oscuro': '🌙'}[valor] }} {{ nombre }}
+      </button>
+    {% endfor %}
+  </form>
+</section>
+
+<section class="panel">
   <h2>Color de botones y barras</h2>
   <p class="tenue nota-chica">Elige un color. La app ajusta sola los tonos del texto para que se lea bien en modo claro y oscuro.</p>
 

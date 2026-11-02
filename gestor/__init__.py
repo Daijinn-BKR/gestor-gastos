@@ -66,6 +66,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         carpeta = Path(app.config["DATABASE"]).parent
         return {"hoy": date.today().isoformat(), "fondo": ajustes.info_fondo(),
                 "css_acento": colores.css(ajustes.color_acento()),
+                "tema": ajustes.tema(),
                 "aviso_carpeta": app.config.get("AVISO_CARPETA"),
                 "otro_equipo": ubicacion.otro_equipo_activo(carpeta),
                 "copias_conflicto": ubicacion.copias_en_conflicto(carpeta),

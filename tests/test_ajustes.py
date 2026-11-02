@@ -90,3 +90,21 @@ def test_titulo_de_ajustes(client):
     html = client.get("/ajustes/").get_data(as_text=True)
     assert "<title>Ajustes · Gestor de gastos</title>" in html
     assert html.count('id="datos"') == 1
+
+
+def test_elegir_tema(client):
+    assert '<html lang="es">' in client.get("/").get_data(as_text=True)   # automático por defecto
+
+    client.post("/ajustes/tema", data={"tema": "oscuro"})
+    html = client.get("/movimientos/").get_data(as_text=True)
+    assert '<html lang="es" data-tema="oscuro">' in html         # se aplica en todas las páginas
+    assert 'value="oscuro" class="selector-tema__opcion activo"' in client.get("/ajustes/").get_data(as_text=True)
+
+    client.post("/ajustes/tema", data={"tema": "claro"})
+    assert '<html lang="es" data-tema="claro">' in client.get("/").get_data(as_text=True)
+
+    client.post("/ajustes/tema", data={"tema": "auto"})
+    assert '<html lang="es">' in client.get("/").get_data(as_text=True)
+
+    r = client.post("/ajustes/tema", data={"tema": "rosado"}, follow_redirects=True)
+    assert "Tema no válido" in r.get_data(as_text=True)

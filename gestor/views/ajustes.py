@@ -59,6 +59,25 @@ def _formato(datos: bytes) -> str | None:
     return None
 
 
+TEMAS = {"auto": "Automático", "claro": "Claro", "oscuro": "Oscuro"}
+
+
+def tema() -> str:
+    """'auto' (sigue a Windows), 'claro' u 'oscuro'."""
+    valor = get_config_texto("tema", "auto")
+    return valor if valor in TEMAS else "auto"
+
+
+@bp.post("/tema")
+def cambiar_tema():
+    valor = request.form.get("tema")
+    if valor not in TEMAS:
+        flash("Tema no válido.", "error")
+    else:
+        set_config("tema", valor)
+    return redirect(url_for(".inicio"))
+
+
 def color_acento() -> str:
     color = get_config_texto("color_acento", colores.COLOR_POR_DEFECTO)
     return color.upper() if colores.es_color(color) else colores.COLOR_POR_DEFECTO
@@ -69,6 +88,7 @@ def inicio():
     return render_template("ajustes.html", fondo=info_fondo(),
                            difuminado=get_config("fondo_difuminado", DIFUMINADO_POR_DEFECTO),
                            color=color_acento(), predefinidos=colores.PREDEFINIDOS,
+                           temas=TEMAS,
                            color_por_defecto=colores.COLOR_POR_DEFECTO,
                            carpeta_datos=str(_carpeta()),
                            carpeta_por_defecto=current_app.config["CARPETA_POR_DEFECTO"],
