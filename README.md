@@ -8,7 +8,7 @@ Programa de escritorio para llevar las finanzas personales, hecho con **Python, 
 | **Crédito** | Un panel con el total de tus créditos, el calendario de cuotas de los próximos 12 meses y en qué categorías usas las tarjetas. Varias tarjetas o líneas de crédito (ej. Falabella, BCI), cada una con su cupo, compras en cuotas con interés y pagos. Soporta compras internacionales en dólares con cupo propio. Calcula deuda, cupo disponible y la próxima cuota estimada. |
 | **Ahorro** | Registra depósitos y retiros, con una meta de ahorro. Los intereses se pueden sumar solos cada día o cada mes. |
 
-Además, una página de **Resumen** junta lo más importante de cada mes (con flechas para revisar meses anteriores) y permite **exportar todo a Excel**.
+Además, una página de **Resumen** junta lo más importante de cada mes (con flechas para revisar meses anteriores) y permite **exportar todo a Excel**. Al costado tiene **Notas**: recordatorios con un monto opcional para apartar (ej. dinero que no debes gastar), que se descuenta de lo que tienes libre.
 
 ![Resumen](docs/resumen.png)
 
@@ -35,6 +35,7 @@ Además, una página de **Resumen** junta lo más importante de cada mes (con fl
 - Cupo internacional en dólares por tarjeta: compras y pagos en US$ por separado de los pesos, como en el estado de cuenta del banco. Al pagar dólares puedes anotar cuántos pesos costó.
 - Tasa anual de ahorro: puedes escribirla o calcularla con lo que te paga el banco (ej. "$15 al día"). Los intereses se suman solos cada día o cada mes, sin perder decimales por redondeo.
 - Pagos de tarjeta y depósitos de ahorro pueden reflejarse automáticamente como movimientos de la cuenta; si los borras, el movimiento vinculado también se borra.
+- Notas en el Resumen: marca cada una como hecha o elimínala. Las que tienen monto se suman en "Apartado en notas" y se restan del saldo para mostrar cuánto queda "Libre para gastar".
 - Validaciones: no deja pagar más que la deuda ni retirar más de lo ahorrado.
 - Funciona sin internet; los datos nunca salen de tu computador.
 - Personalización en ⚙️ Ajustes: color de botones y barras (8 colores listos o cualquier otro; los tonos del texto se ajustan solos para que siempre se lea bien) y fondo de pantalla con difuminado ajustable. La imagen se guarda junto a tus datos, fuera del proyecto.

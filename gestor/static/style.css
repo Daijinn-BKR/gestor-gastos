@@ -304,3 +304,34 @@ body.con-fondo .selector-mes { background: color-mix(in srgb, var(--superficie) 
 .selector-tema__opcion { font: inherit; font-weight: 500; padding: .45rem 1rem; border: 0; border-radius: 8px; background: transparent; color: var(--texto); cursor: pointer; }
 .selector-tema__opcion:hover { background: var(--superficie); }
 .selector-tema__opcion.activo { background: var(--primario); color: var(--sobre-primario); }
+
+/* Resumen con columna lateral de notas */
+.resumen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.resumen__principal { min-width: 0; }
+.resumen__lateral .panel { margin-bottom: 0; }
+@media (min-width: 1180px) {
+  body:has(.resumen) .contenedor { max-width: 1440px; }
+  .resumen { grid-template-columns: minmax(0, 1fr) 320px; }
+  .resumen__lateral { position: sticky; top: 16px; }
+}
+.notas h2 { margin-bottom: 12px; }
+.notas__formulario { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.notas__formulario textarea { font: inherit; padding: .55rem .65rem; border: 1px solid var(--borde); border-radius: 8px;
+                              background: var(--fondo); color: var(--texto); resize: vertical; min-height: 56px; width: 100%; }
+.notas__formulario textarea:focus { outline: 2px solid var(--primario-texto); outline-offset: 1px; }
+.notas__formulario .formulario-linea input { flex: 1; width: auto; min-width: 0; }
+.notas__apartado { margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: var(--fondo); border: 1px solid var(--borde); }
+.notas__apartado .categorias__fila { margin-bottom: 4px; }
+.notas__apartado .nota-chica { margin: 4px 0 0; }
+.notas__lista { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 0; }
+.nota-item { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--borde); }
+.nota-item form { margin: 0; }
+.nota-item__check { width: 20px; height: 20px; margin-top: 2px; border-radius: 6px; border: 2px solid var(--primario-texto);
+                    background: transparent; color: var(--sobre-primario); font-size: .75rem; line-height: 1; cursor: pointer; padding: 0; }
+.nota-item--hecha .nota-item__check { background: var(--primario); border-color: var(--primario); }
+.nota-item__texto { font-size: .92rem; overflow-wrap: anywhere; min-width: 0; }
+.nota-item__contenido { white-space: pre-line; }
+.nota-item__monto { display: inline-block; margin-left: 4px; padding: 0 8px; border-radius: 999px; font-weight: 600; font-size: .82rem;
+                    background: color-mix(in srgb, var(--primario) 25%, transparent); color: var(--primario-texto); }
+.nota-item__fecha { display: block; font-size: .75rem; margin-top: 2px; }
+.nota-item--hecha .nota-item__texto { text-decoration: line-through; opacity: .6; }

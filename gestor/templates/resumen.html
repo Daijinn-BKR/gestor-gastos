@@ -28,6 +28,8 @@
   <p class="tenue nota-chica aviso-mes">Saldos, deuda y ahorro al cierre de {{ mes | nombre_mes }}.</p>
 {% endif %}
 
+<div class="resumen">
+  <div class="resumen__principal">
 <section class="grilla-tarjetas">
   {{ tarjeta('Saldo en cuenta', saldo | clp, 'negativo' if saldo < 0 else '') }}
   {{ tarjeta('Balance del mes', totales.balance | clp,
@@ -95,5 +97,55 @@
     <p class="vacio">No tienes créditos registrados. <a href="{{ url_for('credito.lista') }}">Agrega uno</a>.</p>
   {% endif %}
 </section>
+  </div>
+  <aside class="resumen__lateral" id="notas" aria-label="Notas">
+    <section class="panel notas">
+      <h2>📝 Notas</h2>
+      <form method="post" action="{{ url_for('resumen.crear_nota') }}" class="notas__formulario">
+        <input type="hidden" name="mes" value="{{ mes }}">
+        <textarea name="texto" rows="2" maxlength="300" required
+                  placeholder="Ej: Dejar guardado lo que me devolvieron del trabajo" aria-label="Nueva nota"></textarea>
+        <div class="formulario-linea">
+          <input name="monto" inputmode="numeric" placeholder="Monto (opcional)" aria-label="Monto a apartar">
+          <button class="boton">Agregar</button>
+        </div>
+      </form>
 
+      {% if apartado %}
+        <div class="notas__apartado">
+          <div class="categorias__fila"><span>Apartado en notas</span><strong>{{ apartado | clp }}</strong></div>
+          <div class="categorias__fila"><span>Libre para gastar</span>
+            <strong class="{{ 'monto egreso' if libre < 0 else 'monto ingreso' }}">{{ libre | clp }}</strong></div>
+          <p class="tenue nota-chica">Saldo en cuenta de hoy menos lo apartado.</p>
+        </div>
+      {% endif %}
+
+      {% if notas %}
+        <ul class="notas__lista">
+          {% for n in notas %}
+            <li class="nota-item {{ 'nota-item--hecha' if n.hecha }}">
+              <form method="post" action="{{ url_for('resumen.marcar_nota', id=n.id) }}">
+                <input type="hidden" name="mes" value="{{ mes }}">
+                <button class="nota-item__check" title="{{ 'Marcar como pendiente' if n.hecha else 'Marcar como hecha' }}"
+                        aria-label="{{ 'Marcar como pendiente' if n.hecha else 'Marcar como hecha' }}">{{ '✓' if n.hecha else '' }}</button>
+              </form>
+              <div class="nota-item__texto">
+                <span class="nota-item__contenido">{{ n.texto }}</span>
+                {%- if n.monto %} <span class="nota-item__monto">{{ n.monto | clp }}</span>{% endif %}
+                <span class="tenue nota-item__fecha">{{ n.creada | fecha }}</span>
+              </div>
+              <form method="post" action="{{ url_for('resumen.eliminar_nota', id=n.id) }}"
+                    onsubmit="return confirm('¿Eliminar esta nota?')">
+                <input type="hidden" name="mes" value="{{ mes }}">
+                <button class="boton-icono" title="Eliminar" aria-label="Eliminar nota">✕</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="vacio nota-chica">Anota recordatorios, como dinero que no debes gastar. Si le pones monto, se descuenta de lo que tienes libre.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
 {% endblock %}

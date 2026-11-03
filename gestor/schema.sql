@@ -59,3 +59,13 @@ CREATE TABLE IF NOT EXISTS config (
     clave TEXT PRIMARY KEY,
     valor TEXT NOT NULL
 );
+
+-- Notas del Resumen (recordatorios). Con monto, el dinero queda "apartado":
+-- se resta del saldo para mostrar cuánto queda libre para gastar.
+CREATE TABLE IF NOT EXISTS notas (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    creada  TEXT    NOT NULL,                  -- AAAA-MM-DD
+    texto   TEXT    NOT NULL,
+    monto   INTEGER CHECK (monto IS NULL OR monto > 0),
+    hecha   INTEGER NOT NULL DEFAULT 0 CHECK (hecha IN (0, 1))
+);
