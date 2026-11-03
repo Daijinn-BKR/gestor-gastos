@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS credito_cuentas (
     id     INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre   TEXT    NOT NULL,
     cupo     INTEGER NOT NULL DEFAULT 0 CHECK (cupo >= 0),
-    cupo_usd INTEGER NOT NULL DEFAULT 0 CHECK (cupo_usd >= 0)   -- 0 = sin cupo internacional
+    cupo_usd INTEGER NOT NULL DEFAULT 0 CHECK (cupo_usd >= 0),  -- 0 = sin cupo internacional
+    dia_facturacion INTEGER CHECK (dia_facturacion BETWEEN 1 AND 31)  -- NULL = fin de mes
 );
 
 CREATE TABLE IF NOT EXISTS credito_compras (

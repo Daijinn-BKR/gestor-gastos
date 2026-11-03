@@ -7,11 +7,19 @@
 
 
 
-{% macro tabla_compras(lista, moneda) %}
+{% macro tabla_compras(grupos, moneda, dia) %}
   <div class="tabla-scroll">
   <table class="tabla">
     <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th class="der">Monto</th><th>Cuotas</th><th class="der">Interés</th><th class="der">Total a pagar</th><th></th></tr></thead>
+    {% for periodo, desde, hasta, lista, total in grupos %}
     <tbody>
+      <tr class="fila-periodo">
+        <th colspan="5">
+          Facturación de {{ (periodo | nombre_mes) }}
+          <span class="tenue">· {{ desde | dia_mes }} al {{ hasta | dia_mes }}</span>
+        </th>
+        <th colspan="3" class="der"><span class="tenue">Compras:</span> {{ dinero(total, moneda) }}</th>
+      </tr>
       {% for c in lista %}
         <tr>
           <td>{{ c.fecha | fecha }}</td>
@@ -34,6 +42,7 @@
         </tr>
       {% endfor %}
     </tbody>
+    {% endfor %}
   </table>
   </div>
 {% endmacro %}
@@ -67,7 +76,7 @@
       <summary class="boton boton--secundario">Editar o eliminar</summary>
       <div class="desplegable__panel">
         {{ form_cuenta(url_for('.editar_cuenta', id=cuenta.id), 'Guardar cambios', cuenta.nombre, cuenta.cupo,
-                       (cuenta.cupo_usd | usd)[4:] if cuenta.cupo_usd else '') }}
+                       (cuenta.cupo_usd | usd)[4:] if cuenta.cupo_usd else '', dia=cuenta.dia_facturacion) }}
         <form method="post" action="{{ url_for('.eliminar_cuenta', id=cuenta.id) }}"
               onsubmit="return confirm('¿Eliminar el crédito «{{ cuenta.nombre }}» con todas sus compras y pagos?\n\nLos egresos que ya registraste en Movimientos se mantienen.')">
           <button class="boton boton--peligro">Eliminar este crédito</button>
@@ -77,6 +86,31 @@
   </div>
   {{ barra(resumen.porcentaje_usado if resumen.porcentaje_usado <= 100 else 100,
            'progreso--alerta' if resumen.porcentaje_usado >= 80 else '') }}
+</section>
+
+{% set f = facturacion %}
+<section class="panel facturacion">
+  <h2>🧾 Facturación{% if f.dia %} <span class="tenue nota-chica">· cierra el día {{ f.dia }} de cada mes</span>{% endif %}</h2>
+  <div class="facturacion__grilla">
+    <div>
+      <span class="tarjeta__etiqueta">Período actual · {{ (f.actual | nombre_mes).split(' ')[0] | capitalize }}</span>
+      <strong>{{ f.desde | dia_mes }} al {{ f.hasta | dia_mes }}</strong>
+      <span class="tenue nota-chica">{% if f.dias_restantes == 0 %}Cierra hoy{% elif f.dias_restantes == 1 %}Cierra mañana{% else %}Cierra en {{ f.dias_restantes }} días{% endif %}</span>
+    </div>
+    <div>
+      <span class="tarjeta__etiqueta">Compras de este período</span>
+      <strong>{{ f.compras | clp }}</strong>
+      <span class="tenue nota-chica">A facturar con cuotas: {{ f.a_facturar | clp }}</span>
+    </div>
+    <div>
+      <span class="tarjeta__etiqueta">Último estado de cuenta</span>
+      <strong>{{ f.facturado_anterior | clp }}</strong>
+      <span class="tenue nota-chica">Cerró el {{ f.cierre_anterior | dia_mes }} ({{ (f.anterior | nombre_mes).split(' ')[0] }})</span>
+    </div>
+  </div>
+  {% if not f.dia %}
+    <p class="tenue nota-chica nota">Sin día de facturación, los períodos son meses calendario. Configúralo en <em>Editar o eliminar</em> (ej. día 20 si tu tarjeta cierra el 20).</p>
+  {% endif %}
 </section>
 
 {% if resumen_usd %}
@@ -143,7 +177,7 @@
 <section class="panel">
   <h2>Compras{% if resumen_usd %} en pesos{% endif %}</h2>
   {% if compras.CLP %}
-    {{ tabla_compras(compras.CLP, 'CLP') }}
+    {{ tabla_compras(periodos.CLP, 'CLP', cuenta.dia_facturacion) }}
   {% else %}
     <p class="vacio">No hay compras registradas en {{ cuenta.nombre }}.</p>
   {% endif %}
@@ -153,7 +187,7 @@
 <section class="panel">
   <h2>Compras internacionales (US$)</h2>
   {% if compras.USD %}
-    {{ tabla_compras(compras.USD, 'USD') }}
+    {{ tabla_compras(periodos.USD, 'USD', cuenta.dia_facturacion) }}
   {% else %}
     <p class="vacio">No hay compras en dólares. Elige «Dólares (US$)» al agregar una compra.</p>
   {% endif %}

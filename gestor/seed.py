@@ -16,7 +16,7 @@ GASTOS = [
 ]
 
 # (nombre, cupo en pesos, cupo internacional en centavos de dólar)
-CUENTAS = [("Falabella", 800_000, 0), ("BCI", 1_200_000, 50_000)]
+CUENTAS = [("Falabella", 800_000, 0, 20), ("BCI", 1_200_000, 50_000, None)]
 
 # (cuenta, categoría, descripción, monto, cuotas, interés mensual %)
 COMPRAS = [
@@ -70,7 +70,7 @@ def cargar_datos_demo(conn, meses: int = 3, semilla: int = 42):
             (_dia(mes, 5), cur.lastrowid),
         )
 
-    ids = [conn.execute("INSERT INTO credito_cuentas (nombre, cupo, cupo_usd) VALUES (?, ?, ?)", c).lastrowid
+    ids = [conn.execute("INSERT INTO credito_cuentas (nombre, cupo, cupo_usd, dia_facturacion) VALUES (?, ?, ?, ?)", c).lastrowid
            for c in CUENTAS]
     for j, (cuenta, cat, desc, monto, cuotas, interes) in enumerate(COMPRAS):
         mes = mover_mes(mes_actual, -(len(COMPRAS) - 1 - j) // 2)

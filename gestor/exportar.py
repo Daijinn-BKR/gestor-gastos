@@ -144,10 +144,12 @@ def generar_excel(conn, mes: str | None = None, hoy: date | None = None) -> byte
 
     # ── Crédito ──────────────────────────────────────────────────────────
     nombres = {c["id"]: c["nombre"] for c in listar_cuentas(conn)}
+    dias = {c["id"]: c["dia_facturacion"] for c in listar_cuentas(conn)}
     filas, monedas = [], []
     for c in conn.execute("SELECT * FROM credito_compras WHERE substr(fecha, 1, 7) = ? "
                           "ORDER BY cuenta_id, moneda, fecha, id", (mes,)):
-        e = estado_cuotas(c["monto"], c["cuotas"], _fecha(c["fecha"]), cierre, c["interes"])
+        e = estado_cuotas(c["monto"], c["cuotas"], _fecha(c["fecha"]), cierre, c["interes"],
+                          dias.get(c["cuenta_id"]))
         div = 100 if c["moneda"] == "USD" else 1  # dólares se guardan en centavos
         filas.append((nombres.get(c["cuenta_id"], ""), _fecha(c["fecha"]), c["moneda"], c["categoria"],
                       c["descripcion"], c["monto"] / div, c["cuotas"], c["interes"],

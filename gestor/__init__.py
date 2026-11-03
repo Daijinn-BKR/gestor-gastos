@@ -9,7 +9,7 @@ from flask import Flask
 
 from . import colores, db, ubicacion
 from .rutas import carpeta_datos
-from .utils import clp, fecha_corta, nombre_mes, pct, usd
+from .utils import clp, dia_mes, fecha_corta, nombre_mes, pct, usd
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -54,6 +54,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.jinja_env.filters["clp"] = clp
     app.jinja_env.filters["fecha"] = fecha_corta
     app.jinja_env.filters["nombre_mes"] = nombre_mes
+    app.jinja_env.filters["dia_mes"] = dia_mes
     app.jinja_env.filters["pct"] = pct
     app.jinja_env.filters["usd"] = usd
 

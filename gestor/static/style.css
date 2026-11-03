@@ -335,3 +335,17 @@ body.con-fondo .selector-mes { background: color-mix(in srgb, var(--superficie) 
                     background: color-mix(in srgb, var(--primario) 25%, transparent); color: var(--primario-texto); }
 .nota-item__fecha { display: block; font-size: .75rem; margin-top: 2px; }
 .nota-item--hecha .nota-item__texto { text-decoration: line-through; opacity: .6; }
+
+/* ── Facturación de créditos ───────────────────────────────────────── */
+.facturacion__grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.facturacion__grilla > div {
+  display: grid; gap: 4px; padding: 12px 14px; border-radius: 10px;
+  background: var(--fondo);
+}
+.facturacion__grilla strong { font-size: 1.15rem; }
+.fila-periodo th {
+  background: var(--fondo);
+  font-weight: 600; text-align: left; padding-top: 10px; padding-bottom: 10px;
+  text-transform: none; letter-spacing: normal; font-size: .88rem; color: var(--texto);
+}
+.fila-periodo th.der { text-align: right; }

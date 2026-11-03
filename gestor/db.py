@@ -31,7 +31,7 @@ def close_db(_error=None):
         conn.close()
 
 
-VERSION_ESQUEMA = 3
+VERSION_ESQUEMA = 4
 
 
 def init_db(conn: sqlite3.Connection):
@@ -46,6 +46,7 @@ def init_db(conn: sqlite3.Connection):
         # Cada paso revisa qué falta antes de cambiar algo, así que se puede repetir sin riesgo.
         _migrar_a_v2(conn)
         _migrar_a_v3(conn)
+        _migrar_a_v4(conn)
     conn.execute(f"PRAGMA user_version = {VERSION_ESQUEMA}")
     conn.commit()
 
@@ -127,6 +128,12 @@ def _migrar_a_v3(conn):
     _agregar_columna(conn, "credito_pagos", "moneda",
                      "TEXT NOT NULL DEFAULT 'CLP' CHECK (moneda IN ('CLP', 'USD'))")
     _agregar_columna(conn, "credito_pagos", "monto_clp", "INTEGER")
+
+
+def _migrar_a_v4(conn):
+    """v3 → v4: día de facturación de cada crédito."""
+    _agregar_columna(conn, "credito_cuentas", "dia_facturacion",
+                     "INTEGER CHECK (dia_facturacion BETWEEN 1 AND 31)")
 
 
 def get_config(clave: str, por_defecto: float = 0) -> float:

@@ -2,7 +2,7 @@
 import sqlite3
 
 from gestor import create_app
-from gestor.db import conectar
+from gestor.db import VERSION_ESQUEMA, conectar
 
 ESQUEMA_V1 = """
 CREATE TABLE movimientos (id INTEGER PRIMARY KEY AUTOINCREMENT, fecha TEXT NOT NULL,
@@ -39,7 +39,7 @@ def test_migra_base_v1_con_respaldo(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM movimientos").fetchone()[0] == 1
     assert conn.execute("SELECT valor FROM config WHERE clave = 'meta_ahorro'").fetchone()[0] == "500000"
     assert conn.execute("SELECT 1 FROM config WHERE clave = 'cupo_credito'").fetchone() is None
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 3
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == VERSION_ESQUEMA
     assert conn.execute("SELECT moneda FROM credito_compras").fetchone()[0] == "CLP"
     conn.close()
 
@@ -90,7 +90,8 @@ def test_migra_base_v2_a_v3_dolares(tmp_path):
     assert (cuenta["nombre"], cuenta["cupo"], cuenta["cupo_usd"]) == ("Falabella", 750000, 0)
     assert conn.execute("SELECT COUNT(*) FROM credito_cuentas").fetchone()[0] == 1  # no crea otra
     assert conn.execute("SELECT moneda FROM credito_pagos").fetchone()[0] == "CLP"
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 3
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == VERSION_ESQUEMA
+    assert "dia_facturacion" in cuenta.keys() and cuenta["dia_facturacion"] is None
     conn.close()
     assert len(list(tmp_path.glob("gastos.respaldo-*.db"))) == 1
     assert "Falabella" in app.test_client().get("/credito/").get_data(as_text=True)

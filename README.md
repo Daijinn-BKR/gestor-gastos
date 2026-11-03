@@ -32,6 +32,7 @@ Además, una página de **Resumen** junta lo más importante de cada mes (con fl
 - Respaldo completo en ⚙️ Ajustes: exporta todos tus datos (incluidos color y fondo) a un `.zip` e impórtalos en otro computador. Antes de importar se guarda una copia automática de lo que tenías.
 - Navegación por mes en los movimientos; clic en Fecha, Categoría o Monto para ordenar (y otra vez para invertir). El formulario recuerda el último tipo y fecha usados.
 - Compras en hasta 48 cuotas con interés mensual opcional (cuota fija, sistema francés). Muestra cuántas cuotas van cobradas y cuánto se paga en intereses.
+- Día de facturación por tarjeta (ej. Falabella el 20): las compras se agrupan por estado de cuenta (del 21 de septiembre al 20 de octubre = facturación de octubre), y se muestra el período actual, cuánto llevas comprado y el último monto facturado. Las cuotas se cuentan como cobradas según esa fecha.
 - Cupo internacional en dólares por tarjeta: compras y pagos en US$ por separado de los pesos, como en el estado de cuenta del banco. Al pagar dólares puedes anotar cuántos pesos costó.
 - Tasa anual de ahorro: puedes escribirla o calcularla con lo que te paga el banco (ej. "$15 al día"). Los intereses se suman solos cada día o cada mes, sin perder decimales por redondeo.
 - Pagos de tarjeta y depósitos de ahorro pueden reflejarse automáticamente como movimientos de la cuenta; si los borras, el movimiento vinculado también se borra.

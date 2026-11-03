@@ -32,6 +32,11 @@ def fecha_corta(texto: str) -> str:
         return texto
 
 
+def dia_mes(fecha) -> str:
+    """date(2026, 9, 21) -> '21 sep'"""
+    return f"{fecha.day} {MESES[fecha.month - 1][:3]}"
+
+
 def nombre_mes(mes: str) -> str:
     """'2026-10' -> 'octubre 2026'"""
     anio, num = mes.split("-")

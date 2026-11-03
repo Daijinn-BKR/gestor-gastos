@@ -1,9 +1,11 @@
-{% macro form_cuenta(accion, boton, nombre='', cupo='', cupo_usd='', desde='') %}
+{% macro form_cuenta(accion, boton, nombre='', cupo='', cupo_usd='', desde='', dia='') %}
   <form method="post" action="{{ accion }}" class="formulario">
     <label>Nombre <input name="nombre" value="{{ nombre }}" placeholder="Falabella, BCI…" maxlength="40" required></label>
     <label>Cupo nacional ($) <input name="cupo" value="{{ cupo }}" inputmode="numeric" placeholder="800.000" required></label>
     <label class="ancho">Cupo internacional (US$) <span class="tenue">— opcional, para compras en dólares</span>
       <input name="cupo_usd" value="{{ cupo_usd }}" inputmode="decimal" placeholder="Ej: 100 · vacío = sin cupo internacional"></label>
+    <label class="ancho">Día de facturación <span class="tenue">— opcional, el día que cierra tu estado de cuenta</span>
+      <input type="number" name="dia_facturacion" value="{{ dia or '' }}" min="1" max="31" placeholder="Ej: 20 · vacío = fin de mes"></label>
     {% if desde %}<input type="hidden" name="desde" value="{{ desde }}">{% endif %}
     <button class="boton">{{ boton }}</button>
   </form>
