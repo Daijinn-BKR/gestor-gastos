@@ -349,3 +349,8 @@ body.con-fondo .selector-mes { background: color-mix(in srgb, var(--superficie) 
   text-transform: none; letter-spacing: normal; font-size: .88rem; color: var(--texto);
 }
 .fila-periodo th.der { text-align: right; }
+
+/* Un menú abierto debe quedar sobre los paneles que vienen después
+   (con fondo de pantalla, cada panel difuminado se dibuja en su propia capa). */
+.panel:has(.desplegable[open]),
+.pestanas:has(.desplegable[open]) { position: relative; z-index: 20; }
